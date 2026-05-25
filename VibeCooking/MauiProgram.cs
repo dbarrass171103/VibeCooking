@@ -17,7 +17,6 @@ namespace VibeCooking
 
             builder.Services.AddMauiBlazorWebView();
             builder.Services.AddMudServices();
-            builder.Services.AddDependencies();
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();
