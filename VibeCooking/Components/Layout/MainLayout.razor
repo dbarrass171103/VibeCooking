@@ -1,17 +1,110 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
+<MudThemeProvider Theme="VibeCookingTheme"/>
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudText Typo="Typo.h5" Class="ml-3">Vibe Cooking</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
         <NavMenu />
-    </div>
+    </MudDrawer>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+@code {
+    MudTheme VibeCookingTheme = new MudTheme()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#FF7043",      
+            PrimaryDarken = "#F4511E",
+            PrimaryLighten = "#FFAB91",
+
+            Secondary = "#FFA000", 
+            SecondaryDarken = "#FF8F00",
+            SecondaryLighten = "#FFD54F",
+
+            Tertiary = "#43A047",     
+
+            AppbarBackground = "#FFF8F3",
+            AppbarText = "#4E342E",
+
+            Background = "#FFFDF9",
+            Surface = "#FFFFFF",
+
+            DrawerBackground = "#FFF8F3",
+            DrawerText = "#5D4037",
+
+            TextPrimary = "#3E2723",
+            TextSecondary = "#6D4C41",
+
+            Success = "#43A047",
+            Warning = "#FB8C00",
+            Error = "#E53935",
+            Info = "#1E88E5",
+
+            Divider = "#E0E0E0",
+            LinesDefault = "#E0E0E0",
+
+            TableLines = "#EEEEEE",
+            TableStriped = "#FAFAFA"
+        },
+
+        PaletteDark = new PaletteDark
+        {
+            Primary = "#FF8A65",
+            Secondary = "#FFD54F",
+            Tertiary = "#66BB6A",
+
+            Background = "#1E1E1E",
+            Surface = "#2A2A2A",
+
+            AppbarBackground = "#2A2A2A",
+            DrawerBackground = "#252525",
+
+            TextPrimary = "#F5F5F5",
+            TextSecondary = "#D7CCC8",
+
+            Success = "#66BB6A",
+            Warning = "#FFB74D",
+            Error = "#EF5350",
+            Info = "#42A5F5"
+        },
+
+        Typography = new Typography
+        {
+            Default = new DefaultTypography
+            {
+                FontFamily = new[] { "Inter", "Roboto", "Helvetica", "Arial", "sans-serif" }
+            },
+
+            H1 = new H1Typography
+            {
+                FontWeight = "700"
+            },
+
+            H2 = new H2Typography
+            {
+                FontWeight = "700"
+            }
+        }
+    };
+
+    bool _drawerOpen = true;
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+}
