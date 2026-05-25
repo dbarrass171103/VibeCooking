@@ -1,5 +1,61 @@
 ﻿@page "/"
+@inject HomeViewModel viewModel
 
-<h1>Hello, world!</h1>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
 
-Welcome to your new app.
+    <div>
+        <MudText Typo="Typo.h3" GutterBottom="false">My Recipes</MudText>
+        <MudText Typo="Typo.body1" Color="Color.Secondary">Recently generated recipes</MudText>
+    </div>
+
+    @if (vm.SavedRecipes.Count > 0)
+    {
+        <MudGrid>
+            @foreach (SavedRecipeModel savedRecipe in vm.SavedRecipes)
+            {
+                <MudItem xs="12" sm="6" md="4" Style="height: 100%;">
+                    <MudCard>
+                        <MudCardMedia Image="@savedRecipe.ImageBase64" Height="200" />
+
+                        <MudCardContent>
+                            <MudText Typo="Typo.h5" Class="mt-3">@savedRecipe.RecipeName</MudText>
+                            <MudText Typo="Typo.body2" Class="mt-2">@savedRecipe.Description</MudText>
+                        </MudCardContent>
+
+                        <MudCardActions>
+                            <MudButton Color="Color.Primary">View</MudButton>
+                            <MudSpacer />
+
+                            @if (savedRecipe.IsLiked)
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.Favorite" />
+                            }
+                            else
+                            {
+                                <MudIconButton Style="color: red;" Icon="@Icons.Material.Filled.FavoriteBorder" />
+                            }
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+    else
+    {
+        <MudText Typo="Typo.body1">No saved recipes. Start creating recipes...</MudText>
+    }
+
+    <MudButton Style="position: fixed; bottom: 30px;" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AutoAwesome">Generate Recipe</MudButton>
+</MudContainer>
+
+@code
+{
+    private HomeViewModel vm;
+
+    protected override async Task OnInitializedAsync()
+    {
+        vm = viewModel;
+
+        await vm.InitAsync();
+    }
+}
