@@ -1,4 +1,5 @@
-﻿using VibeCooking.ViewModels;
+﻿using VibeCooking.Services;
+using VibeCooking.ViewModels;
 
 namespace VibeCooking;
 
@@ -8,5 +9,8 @@ public static class DependencyContainer
 	{
 		//View Models
 		services.AddTransient<HomeViewModel>();
+
+		//Services
+		services.AddTransient<IApiService, ApiService>();
 	}
 }
