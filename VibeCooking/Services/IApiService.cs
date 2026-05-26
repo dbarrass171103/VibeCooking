@@ -4,5 +4,5 @@ namespace VibeCooking.Services;
 
 public interface IApiService
 {
-	public Task<RecipeOutputModel> GenerateRecipeAsync(RecipeParameterModel parameters);
+	public Task<(bool success, string errorMessage, RecipeOutputModel? output)> GenerateRecipeAsync(RecipeParameterModel parameters);
 }
