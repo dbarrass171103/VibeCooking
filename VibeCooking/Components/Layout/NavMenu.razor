@@ -1,6 +1,15 @@
-﻿<MudNavMenu>
-    <MudNavLink Href="/" Match="NavLinkMatch.All">Home</MudNavLink>
-    <MudNavLink Href="/ingredients" Match="NavLinkMatch.All">Ingredients</MudNavLink>
-    <MudNavLink Href="/recipe-generation" Match="NavLinkMatch.All">Recipe Generation</MudNavLink>
-    <MudNavLink Href="/my-recipes" Match="NavLinkMatch.All">My Recipes</MudNavLink>
-</MudNavMenu>
+﻿<MudAppBar Bottom="true" Dense="true" Elevation="8" Style="display:flex; justify-content:space-evenly; align-items:center; height:70px;">
+
+    <MudNavLink Href="/ingredients" Match="NavLinkMatch.Prefix" Class="d-flex justify-center align-center flex-grow-1">
+        <img src="/Icons/ingredients.svg" style="height:32px; width:32px;" />
+    </MudNavLink>
+
+    <MudNavLink Href="/recipe-generation" Match="NavLinkMatch.Prefix" Class="d-flex justify-center align-center flex-grow-1">
+        <img src="/Icons/generaterecipe.svg" style="height:32px; width:32px;" />
+    </MudNavLink>
+
+    <MudNavLink Href="/my-recipes" Match="NavLinkMatch.Prefix" Class="d-flex justify-center align-center flex-grow-1"> 
+        <img src="/Icons/cookbook.svg" style="height:32px; width:32px;" />
+    </MudNavLink>
+
+</MudAppBar>

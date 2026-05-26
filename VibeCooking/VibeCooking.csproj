@@ -66,4 +66,16 @@
         <PackageReference Include="MudBlazor" Version="9.4.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <MauiImage Include="wwwroot\Icons\cookbook.svg" />
+      <MauiImage Include="wwwroot\Icons\generaterecipe.svg" />
+      <MauiImage Include="wwwroot\Icons\ingredients.svg" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Include="wwwroot\Icons\cookbook.svg" />
+      <None Include="wwwroot\Icons\generaterecipe.svg" />
+      <None Include="wwwroot\Icons\ingredients.svg" />
+    </ItemGroup>
+
 </Project>
