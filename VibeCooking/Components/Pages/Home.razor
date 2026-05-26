@@ -1,5 +1,6 @@
 ﻿@page "/"
 @inject HomeViewModel viewModel
+@inject ISnackbar Snackbar
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
 
@@ -56,6 +57,13 @@
     {
         vm = viewModel;
 
-        await vm.InitAsync();
+        try
+        {
+            await vm.InitAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"ERROR: {ex.Message}", Severity.Error);
+        }
     }
 }

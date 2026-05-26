@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using MudBlazor;
 using MudBlazor.Services;
 
 namespace VibeCooking
@@ -16,8 +17,17 @@ namespace VibeCooking
                 });
 
             builder.Services.AddMauiBlazorWebView();
-            builder.Services.AddMudServices();
-            builder.Services.AddDependencies();
+
+			builder.Services.AddMudServices(config =>
+			{
+				config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomCenter;
+				config.SnackbarConfiguration.NewestOnTop = true;
+				config.SnackbarConfiguration.SnackbarVariant = Variant.Filled;
+				config.SnackbarConfiguration.ShowTransitionDuration = 500;
+				config.SnackbarConfiguration.HideTransitionDuration = 500;
+			});
+
+			builder.Services.AddDependencies();
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();

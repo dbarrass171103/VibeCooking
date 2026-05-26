@@ -8,6 +8,19 @@ public class HomeViewModel : BaseViewModel
 
 	public override async Task InitAsync()
 	{
-		//TODO Load the last 3 saved recipes from the local database/storage? and load into the list. THese will be automatically displayed on the homepage.
+		try
+		{
+			await LoadSavedRecipesAsync(numRecipes: 3);
+		}
+		catch (Exception ex)
+		{
+			throw;
+		}
+	}
+
+	private async Task LoadSavedRecipesAsync(int numRecipes)
+	{
+		//TODO - load the last 3 saved recipes from the local storage to show on homepage
+		throw new NotImplementedException("Failed to load saved recipes");
 	}
 }
