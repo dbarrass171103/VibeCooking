@@ -391,3 +391,6 @@ temp
 
 # Gradle build reports
 src/Core/AndroidNative/build/reports/
+
+# Contains AI API information
+appsettings.json

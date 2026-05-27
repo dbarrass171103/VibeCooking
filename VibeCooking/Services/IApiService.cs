@@ -4,5 +4,9 @@ namespace VibeCooking.Services;
 
 public interface IApiService
 {
-	public Task<(bool success, string errorMessage, RecipeOutputModel? output)> GenerateRecipeAsync(RecipeParameterModel parameters);
+    // Generates ~5 recipe cards for the user to choose from. Called first when users generate recipes
+    Task<(bool success, string errorMessage, List<RecipeCardModel> cards)> GenerateRecipeCardsAsync(RecipeParameterModel parameters);
+
+    // Generates the full recipe based on a chosen card. Called when user selects recipe they like
+    Task<(bool success, string errorMessage, RecipeOutputModel? output)> GenerateRecipeAsync(RecipeCardModel chosenCard, RecipeParameterModel parameters);
 }

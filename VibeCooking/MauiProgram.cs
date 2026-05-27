@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using MudBlazor;
 using MudBlazor.Services;
 
@@ -16,22 +17,29 @@ namespace VibeCooking
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 });
 
+            // Load credentials
+            var config = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: true)
+                .Build();
+
+            builder.Configuration.AddConfiguration(config);
+
             builder.Services.AddMauiBlazorWebView();
 
-			builder.Services.AddMudServices(config =>
-			{
-				config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomCenter;
-				config.SnackbarConfiguration.NewestOnTop = true;
-				config.SnackbarConfiguration.SnackbarVariant = Variant.Filled;
-				config.SnackbarConfiguration.ShowTransitionDuration = 500;
-				config.SnackbarConfiguration.HideTransitionDuration = 500;
-			});
+            builder.Services.AddMudServices(config =>
+            {
+                config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomCenter;
+                config.SnackbarConfiguration.NewestOnTop = true;
+                config.SnackbarConfiguration.SnackbarVariant = Variant.Filled;
+                config.SnackbarConfiguration.ShowTransitionDuration = 500;
+                config.SnackbarConfiguration.HideTransitionDuration = 500;
+            });
 
-			builder.Services.AddDependencies();
+            builder.Services.AddDependencies();
 
 #if DEBUG
-    		builder.Services.AddBlazorWebViewDeveloperTools();
-    		builder.Logging.AddDebug();
+            builder.Services.AddBlazorWebViewDeveloperTools();
+            builder.Logging.AddDebug();
 #endif
 
             return builder.Build();
