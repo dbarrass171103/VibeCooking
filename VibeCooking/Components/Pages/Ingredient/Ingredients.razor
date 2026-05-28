@@ -1,0 +1,190 @@
+@* Page that lets the user build their ingredient list.
+   Catalog ingredients are grouped by category; binary ingredients (seasonings/oils)
+   are toggled on/off. Non-binary ingredients open a quantity dialog on tap.
+   Custom ingredients can be added via a separate dialog and appear as chips. *@
+
+@page "/ingredients"
+@page "/"
+
+@using VibeCooking.Models
+@using VibeCooking.ViewModels
+
+@inject IngredientsViewModel ViewModel
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4 mb-8">
+
+    <MudText Typo="Typo.h4" GutterBottom="false">My Ingredients</MudText>
+
+    <MudText Class="mt-1 mb-6" Typo="Typo.body1" Color="Color.Secondary">
+        Select what you have available and we'll generate recipes around them.
+    </MudText>
+
+    @* Non-binary categories — tapping opens a quantity dialog *@
+    @RenderSection("Meat", ViewModel.Meat)
+    @RenderSection("Vegetables", ViewModel.Vegetables)
+    @RenderSection("Fruit", ViewModel.Fruit)
+    @RenderSection("Dairy & Eggs", ViewModel.Dairy)
+    @RenderSection("Grains & Carbs", ViewModel.Grains)
+
+    @* Binary categories — tap to toggle, no quantity *@
+    <MudText Typo="Typo.h6" Class="mb-2">Seasonings & Spices</MudText>
+    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+        Tap to mark as available
+    </MudText>
+    <MudPaper Class="pa-4 mb-6" Elevation="1">
+        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            @foreach (var ingredient in ViewModel.Seasonings)
+            {
+                <MudButton Variant="@(ingredient.IsSelected ? Variant.Filled : Variant.Outlined)"
+                           Color="Color.Secondary"
+                           Size="Size.Small"
+                           OnClick="@(() => ViewModel.ToggleBinary(ingredient))">
+                    @ingredient.Name
+                </MudButton>
+            }
+        </div>
+    </MudPaper>
+
+    <MudText Typo="Typo.h6" Class="mb-2">Oils & Condiments</MudText>
+    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+        Tap to mark as available
+    </MudText>
+    <MudPaper Class="pa-4 mb-6" Elevation="1">
+        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            @foreach (var ingredient in ViewModel.OilsAndCondiments)
+            {
+                <MudButton Variant="@(ingredient.IsSelected ? Variant.Filled : Variant.Outlined)"
+                           Color="Color.Secondary"
+                           Size="Size.Small"
+                           OnClick="@(() => ViewModel.ToggleBinary(ingredient))">
+                    @ingredient.Name
+                </MudButton>
+            }
+        </div>
+    </MudPaper>
+
+    @* Custom ingredients entered by the user *@
+    <MudText Typo="Typo.h6" Class="mb-2">Something else?</MudText>
+    <MudPaper Class="pa-4 mb-6" Elevation="1">
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="OpenCustomIngredientDialog">
+            Add Custom Ingredient
+        </MudButton>
+
+        @if (ViewModel.CustomIngredients.Count > 0)
+        {
+            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;">
+                @foreach (var ingredient in ViewModel.CustomIngredients)
+                {
+                    <MudChip T="string" Color="Color.Primary"
+                             OnClose="@(() => ViewModel.RemoveCustomIngredient(ingredient))">
+                        @ingredient.Name
+                        @if (!string.IsNullOrWhiteSpace(ingredient.Quantity))
+                        {
+                            <span style="margin-left:4px; opacity:0.8;">— @ingredient.Quantity</span>
+                        }
+                    </MudChip>
+                }
+            </div>
+        }
+
+    </MudPaper>
+
+</MudContainer>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await ViewModel.InitAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to initialise: {ex.Message}", Severity.Error);
+        }
+    }
+
+    // Opens the quantity dialog for a catalog ingredient.
+    private async Task OpenQuantityDialog(UserIngredient ingredient)
+    {
+        var dialog = await DialogService.ShowAsync<QuantityDialog>(
+            "Enter Quantity",
+            new DialogParameters<QuantityDialog>
+            {
+                { x => x.IngredientName, ingredient.Name },
+                { x => x.Quantity, ingredient.Quantity }
+            },
+            new DialogOptions
+            {
+                CloseOnEscapeKey = true,
+                MaxWidth = MaxWidth.ExtraSmall,
+                FullWidth = true
+            });
+
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is string quantity)
+            ViewModel.SelectIngredient(ingredient, quantity);
+        else
+            ViewModel.DeselectIngredient(ingredient);
+
+        StateHasChanged();
+    }
+    // Opens the custom ingredient dialog.
+    private async Task OpenCustomIngredientDialog()
+    {
+        var dialog = await DialogService.ShowAsync<CustomIngredientDialog>(
+            "Add Ingredient",
+            new DialogOptions
+            {
+                MaxWidth = MaxWidth.ExtraSmall,
+                FullWidth = true
+            });
+
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is UserIngredient ingredient)
+        {
+            ViewModel.AddCustomIngredient(ingredient.Name, ingredient.Quantity);
+            StateHasChanged();
+        }
+    }
+
+    // Renders a labeled ingredient section as a row of toggle buttons.
+    private RenderFragment RenderSection(string title, List<UserIngredient> ingredients) => __builder =>
+    {
+        <MudText Typo="Typo.h6" Class="mb-2">@title</MudText>
+
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+            Tap to add — tap again to remove
+        </MudText>
+
+        <MudPaper Class="pa-4 mb-6" Elevation="1">
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                @foreach (var ingredient in ingredients)
+                {
+                    <MudButton Variant="@(ingredient.IsSelected ? Variant.Filled : Variant.Outlined)"
+                               Color="Color.Primary"
+                               Size="Size.Small"
+                               OnClick="@(() => OpenQuantityDialog(ingredient))">
+
+                        @ingredient.Name
+
+                        @if (ingredient.IsSelected && !string.IsNullOrWhiteSpace(ingredient.Quantity))
+                        {
+                            <span style="margin-left:4px; opacity:0.8;">
+                                — @ingredient.Quantity
+                            </span>
+                        }
+                    </MudButton>
+                }
+            </div>
+        </MudPaper>;
+    };
+}

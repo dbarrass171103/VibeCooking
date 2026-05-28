@@ -1,0 +1,90 @@
+@* Dialog for manually entering a custom ingredient name and optional quantity.
+   Returns a UserIngredient on confirm, or cancels with no result. *@
+
+@using VibeCooking.Models
+
+<MudDialog>
+    <DialogContent>
+
+        <MudTextField T="string"
+                      @ref="_nameField"
+                      @bind-Value="_name"
+                      @bind-Value:after="() => _showError = false"
+                      Label="Ingredient Name"
+                      Placeholder="e.g. Dragon Fruit"
+                      Variant="Variant.Outlined"
+                      Immediate="true"
+                      FullWidth="true"
+                      Error="@_showError"
+                      ErrorText="Please enter an ingredient name"
+                      Class="mb-4" />
+
+        <MudTextField T="string"
+                      @bind-Value="_quantity"
+                      Label="Quantity (Optional)"
+                      Placeholder="e.g. 250g"
+                      Variant="Variant.Outlined"
+                      Immediate="true"
+                      FullWidth="true"
+                      OnKeyUp="HandleKeyUp" />
+
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save">Save</MudButton>
+    </DialogActions>
+
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private MudTextField<string>? _nameField;
+
+    private string _name = "";
+    private string _quantity = "";
+
+    private bool _showError = false;
+
+    // Focuses the name field shortly after first render.
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _nameField is not null)
+        {
+            await Task.Delay(150);
+            await _nameField.FocusAsync();
+        }
+    }
+
+    // Validates the name field and closes the dialog with a new UserIngredient on success.
+    private void Save()
+    {
+        if (string.IsNullOrWhiteSpace(_name))
+        {
+            _showError = true;
+            StateHasChanged();
+            return;
+        }
+
+        MudDialog.Close(DialogResult.Ok(new UserIngredient
+        {
+            Name = _name.Trim(),
+            Quantity = _quantity?.Trim() ?? string.Empty,
+            IsSelected = true,
+            IsCustom = true
+        }));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    //Submits the dialog when the user presses Enter
+    private void HandleKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            Save();
+    }
+}

@@ -8,7 +8,7 @@ public static class DependencyContainer
 	public static void AddDependencies(this IServiceCollection services)
 	{
 		//View Models
-		services.AddTransient<HomeViewModel>();
+		services.AddTransient<IngredientsViewModel>();
 
 		//Services
 		services.AddTransient<IApiService, ApiService>();
