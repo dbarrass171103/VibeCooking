@@ -1,4 +1,6 @@
-﻿using System.Text.Json;
+﻿using System.ComponentModel;
+using System.Reflection;
+using System.Text.Json;
 using Azure;
 using Azure.AI.OpenAI;
 using Microsoft.Extensions.Configuration;
@@ -49,7 +51,6 @@ public class ApiService : IApiService
                 new UserChatMessage(userPrompt)
             );
 
-            // Clean and deserialise the JSON response into a list of recipe cards
             string rawJson = CleanJson(completion.Content[0].Text);
             List<RecipeCardModel>? cards = JsonSerializer.Deserialize<List<RecipeCardModel>>(rawJson, JsonOptions);
 
@@ -77,7 +78,6 @@ public class ApiService : IApiService
                 new UserChatMessage(userPrompt)
             );
 
-            // Clean and deserialise the JSON response into a full recipe model
             string rawJson = CleanJson(completion.Content[0].Text);
             RecipeOutputModel? output = JsonSerializer.Deserialize<RecipeOutputModel>(rawJson, JsonOptions);
 
@@ -94,65 +94,65 @@ public class ApiService : IApiService
 
     // System prompt for Step 1. Tells AI to return 5 recipe cards as a raw JSON array matching the RecipeCardModel structure.
     private static string BuildCardSystemPrompt() => """
-		You are a recipe generator. When asked, you return exactly 5 recipe cards
-		as a valid JSON array and nothing else. no preamble, no explanation, no markdown fences.
+        You are a recipe generator. When asked, you return exactly 5 recipe cards
+        as a valid JSON array and nothing else. no preamble, no explanation, no markdown fences.
 
-		Each card in the array must exactly match this structure:
-		{
-		  "RecipeName": "string",
-		  "Description": "string",
-		  "CuisineType": "string",
-		  "Difficulty": "Easy" | "Medium" | "Hard",
-		  "MealType": "Breakfast" | "Lunch" | "Dinner" | "Snack" | "Dessert",
-		  "CookTimeMinutes": int,
-		  "PrepTimeMinutes": int,
-		  "Servings": int,
-		  "Ingredients": ["string"]
-		}
+        Each card in the array must exactly match this structure:
+        {
+          "RecipeName": "string",
+          "Description": "string",
+          "CuisineType": "string",
+          "Difficulty": "Easy" | "Medium" | "Hard",
+          "MealType": "Breakfast" | "Lunch" | "Dinner" | "Snack" | "Dessert",
+          "CookTimeMinutes": int,
+          "PrepTimeMinutes": int,
+          "Servings": int,
+          "Ingredients": ["string"]
+        }
 
-		The Ingredients array should be a simple flat list of ingredient names only.
-		Return exactly 5 varied and distinct recipes.
-		""";
+        The Ingredients array should be a simple flat list of ingredient names only.
+        Return exactly 5 varied and distinct recipes.
+        """;
 
 
-    /// System prompt for Step 2. Instructs the AI to return a single full recipe as a raw JSON object matching the RecipeOutputModel structure.
+    // System prompt for Step 2. Instructs the AI to return a single full recipe as a raw JSON object matching the RecipeOutputModel structure.
   
     private static string BuildFullRecipeSystemPrompt() => """
-		You are a recipe generator. When asked, you return a single full recipe as a
-		valid JSON object and nothing else. no preamble, no explanation, no markdown fences.
+        You are a recipe generator. When asked, you return a single full recipe as a
+        valid JSON object and nothing else. no preamble, no explanation, no markdown fences.
 
-		The JSON must exactly match this structure:
-		{
-		  "RecipeName": "string",
-		  "Description": "string",
-		  "CuisineType": "string",
-		  "Difficulty": "Easy" | "Medium" | "Hard",
-		  "MealType": "Breakfast" | "Lunch" | "Dinner" | "Snack" | "Dessert",
-		  "CookTimeMinutes": int,
-		  "PrepTimeMinutes": int,
-		  "Servings": int,
-		  "Ingredients": [
-		    {
-		      "Name": "string",
-		      "Quantity": "string",
-		      "IsOptional": bool
-		    }
-		  ],
-		  "Equipment": ["string"],
-		  "Instructions": ["string"],
-		  "NutritionPerServing": {
-		    "CaloriesKcal": int,
-		    "ProteinG": float,
-		    "CarbsG": float,
-		    "FatG": float,
-		    "FibreG": float,
-		    "SugarG": float,
-		    "SaltG": float
-		  },
-		  "StorageAdvice": "string",
-		  "Substitutions": ["string"]
-		}
-		""";
+        The JSON must exactly match this structure:
+        {
+          "RecipeName": "string",
+          "Description": "string",
+          "CuisineType": "string",
+          "Difficulty": "Easy" | "Medium" | "Hard",
+          "MealType": "Breakfast" | "Lunch" | "Dinner" | "Snack" | "Dessert",
+          "CookTimeMinutes": int,
+          "PrepTimeMinutes": int,
+          "Servings": int,
+          "Ingredients": [
+            {
+              "Name": "string",
+              "Quantity": "string",
+              "IsOptional": bool
+            }
+          ],
+          "Equipment": ["string"],
+          "Instructions": ["string"],
+          "NutritionPerServing": {
+            "CaloriesKcal": int,
+            "ProteinG": float,
+            "CarbsG": float,
+            "FatG": float,
+            "FibreG": float,
+            "SugarG": float,
+            "SaltG": float
+          },
+          "StorageAdvice": "string",
+          "Substitutions": ["string"]
+        }
+        """;
 
    
     /// Builds the user prompt for Step 1 from user's selected parameters. Only includes dietary/allergy flags if they are set.
@@ -161,7 +161,7 @@ public class ApiService : IApiService
         List<string> parts =
         [
             $"Generate 5 recipe cards for a {p.Difficulty} {p.MealType} for {p.Servings} servings.",
-            $"Cuisine: {p.CuisineType}.",
+            $"Cuisine: {GetDisplayName(p.CuisineType)}.",
             $"Target cook time: ~{p.CookTimeMinutes} minutes.",
         ];
 
@@ -182,7 +182,7 @@ public class ApiService : IApiService
         return string.Join(" ", parts);
     }
 
-    /// Builds the user prompt for Step 2 using the chosen card as the basis
+    // Builds the user prompt for Step 2 using the chosen card as the basis
     private static string BuildFullRecipeUserPrompt(RecipeCardModel card, RecipeParameterModel p)
     {
         List<string> parts =
@@ -207,7 +207,17 @@ public class ApiService : IApiService
         return string.Join(" ", parts);
     }
 
-    
+    /// <summary>
+    /// Returns the [Description] attribute value for an enum member if present
+    /// for values like HongKong → "Hong Kong".
+    /// </summary>
+    private static string GetDisplayName<T>(T value) where T : Enum
+    {
+        var member = typeof(T).GetMember(value.ToString()).FirstOrDefault();
+        var description = member?.GetCustomAttribute<DescriptionAttribute>()?.Description;
+        return description ?? value.ToString();
+    }
+
     // Strips markdown code fences from the AI response if present.
     private static string CleanJson(string raw) =>
         raw.Replace("```json", string.Empty)

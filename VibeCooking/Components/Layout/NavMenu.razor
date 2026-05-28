@@ -1,4 +1,4 @@
-﻿<MudAppBar Bottom="true" Dense="true" Elevation="8" Style="display:flex; justify-content:space-evenly; align-items:center; height:70px;">
+<MudAppBar Bottom="true" Dense="true" Elevation="8" Style="display:flex; justify-content:space-evenly; align-items:center; height:70px;">
 
     <MudNavLink Href="/ingredients" Match="NavLinkMatch.Prefix" Class="d-flex justify-center align-center flex-grow-1">
         <img src="/Icons/ingredients.png" style="height:64px; width:64px;" />
@@ -8,8 +8,13 @@
         <img src="/Icons/generaterecipe.png" style="height:64px; width:64px;" />
     </MudNavLink>
 
-    <MudNavLink Href="/my-recipes" Match="NavLinkMatch.Prefix" Class="d-flex justify-center align-center flex-grow-1"> 
-        <img src="/Icons/cookbook.png" style="height:64px; width:64px; n" />
+    @* No recipechat.png currently, will create soon *@
+    <MudNavLink Href="/recipe-chat" Match="NavLinkMatch.Prefix" Class="d-flex justify-center align-center flex-grow-1">
+        <img src="/Icons/recipechat.png" style="height:64px; width:64px;" />
+    </MudNavLink>
+
+    <MudNavLink Href="/my-recipes" Match="NavLinkMatch.Prefix" Class="d-flex justify-center align-center flex-grow-1">
+        <img src="/Icons/cookbook.png" style="height:64px; width:64px;" />
     </MudNavLink>
 
 </MudAppBar>

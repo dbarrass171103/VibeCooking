@@ -1,0 +1,81 @@
+@* Dialog for entering a quantity against a catalog ingredient.
+   Receives the ingredient name as a display label and the existing quantity
+   (if any) as the pre-filled value. Returns only the quantity string on confirm. *@
+
+<MudDialog>
+    <DialogContent>
+
+        <MudText Typo="Typo.h6" Class="mb-4">@IngredientName</MudText>
+
+        <MudTextField T="string"
+                      @ref="_quantityField"
+                      @bind-Value="Quantity"
+                      @bind-Value:after="() => _showError = false"
+                      Label="Quantity"
+                      Placeholder="e.g. 250g"
+                      Variant="Variant.Outlined"
+                      Immediate="true"
+                      FullWidth="true"
+                      Error="@_showError"
+                      ErrorText="Please enter a quantity"
+                      OnKeyUp="HandleKeyUp" />
+
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save">Save</MudButton>
+    </DialogActions>
+
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public string IngredientName { get; set; } = "";
+
+    // quantity value; updated by the user and returned on save
+    [Parameter]
+    public string Quantity { get; set; } = "";
+
+    // Reference kept so focus can be set programmatically after first render.
+    private MudTextField<string>? _quantityField;
+
+    // Controls whether the quantity validation error message is visible.
+    private bool _showError = false;
+
+    // Focuses the quantity field shortly after first render.
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _quantityField is not null)
+        {
+            await Task.Delay(150);
+            await _quantityField.FocusAsync();
+        }
+    }
+
+    // Validates the quantity field and closes the dialog with the trimmed string on success.
+    private void Save()
+    {
+        if (string.IsNullOrWhiteSpace(Quantity))
+        {
+            _showError = true;
+            StateHasChanged();
+            return;
+        }
+
+        MudDialog.Close(DialogResult.Ok(Quantity.Trim()));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    // Submits the dialog when the user presses Enter
+    private void HandleKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            Save();
+    }
+}
