@@ -1,4 +1,4 @@
-@* Dialog for manually entering a custom ingredient name and optional quantity.
+@* Dialog for manually entering a custom ingredient name and category.
    Returns a UserIngredient on confirm, or cancels with no result. *@
 
 @using VibeCooking.Models
@@ -19,14 +19,16 @@
                       ErrorText="Please enter an ingredient name"
                       Class="mb-4" />
 
-        <MudTextField T="string"
-                      @bind-Value="_quantity"
-                      Label="Quantity (Optional)"
-                      Placeholder="e.g. 250g"
-                      Variant="Variant.Outlined"
-                      Immediate="true"
-                      FullWidth="true"
-                      OnKeyUp="HandleKeyUp" />
+        <MudSelect T="IngredientCategory"
+                   @bind-Value="_category"
+                   Label="Category"
+                   Variant="Variant.Outlined"
+                   FullWidth="true">
+            @foreach (IngredientCategory cat in Enum.GetValues<IngredientCategory>())
+            {
+                <MudSelectItem Value="@cat">@GetCategoryLabel(cat)</MudSelectItem>
+            }
+        </MudSelect>
 
     </DialogContent>
 
@@ -43,14 +45,11 @@
     private IMudDialogInstance MudDialog { get; set; } = default!;
 
     private MudTextField<string>? _nameField;
-
     private string _name = "";
-    private string _quantity = "";
-
+    private IngredientCategory _category = IngredientCategory.Misc;
     private bool _showError = false;
 
     // Focuses the name field shortly after first render.
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && _nameField is not null)
@@ -73,18 +72,18 @@
         MudDialog.Close(DialogResult.Ok(new UserIngredient
         {
             Name = _name.Trim(),
-            Quantity = _quantity?.Trim() ?? string.Empty,
-            IsSelected = true,
+            Category = _category,
+            IsSelected = false,
             IsCustom = true
         }));
     }
 
     private void Cancel() => MudDialog.Cancel();
 
-    //Submits the dialog when the user presses Enter
-    private void HandleKeyUp(KeyboardEventArgs e)
+    // Converts enum values to human-readable labels for the dropdown
+    private static string GetCategoryLabel(IngredientCategory category) => category switch
     {
-        if (e.Key == "Enter")
-            Save();
-    }
+        IngredientCategory.OilsAndCondiments => "Oils & Condiments",
+        _ => System.Text.RegularExpressions.Regex.Replace(category.ToString(), "(\\B[A-Z])", " $1")
+    };
 }

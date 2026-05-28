@@ -1,16 +1,20 @@
-﻿using VibeCooking.Services;
+﻿using MonkeyCache.FileStore;
+using VibeCooking.Services;
 using VibeCooking.ViewModels;
 
 namespace VibeCooking;
 
 public static class DependencyContainer
 {
-	public static void AddDependencies(this IServiceCollection services)
-	{
-		//View Models
-		services.AddTransient<IngredientsViewModel>();
+    public static void AddDependencies(this IServiceCollection services)
+    {
+        Barrel.ApplicationId = "VibeCooking";
 
-		//Services
-		services.AddTransient<IApiService, ApiService>();
-	}
+        // View Models
+        services.AddSingleton<IngredientsViewModel>();
+
+        // Services
+        services.AddTransient<IApiService, ApiService>();
+        services.AddSingleton<ILocalStorageService, LocalStorageService>();
+    }
 }
