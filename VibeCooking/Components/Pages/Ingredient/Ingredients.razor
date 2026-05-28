@@ -113,6 +113,13 @@
     // Opens the quantity dialog for a catalog ingredient.
     private async Task OpenQuantityDialog(UserIngredient ingredient)
     {
+        if (ingredient.IsSelected)
+        {
+            ViewModel.DeselectIngredient(ingredient);
+            StateHasChanged();
+            return;
+        }
+
         var dialog = await DialogService.ShowAsync<QuantityDialog>(
             "Enter Quantity",
             new DialogParameters<QuantityDialog>
