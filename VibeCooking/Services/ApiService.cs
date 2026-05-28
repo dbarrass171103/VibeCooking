@@ -7,6 +7,11 @@ using VibeCooking.Models;
 
 namespace VibeCooking.Services;
 
+/// <summary>
+/// Handles all communication with the Azure OpenAI API.
+/// Step 1 — GenerateRecipeCardsAsync: returns 5  recipe cards.
+/// Step 2 — GenerateRecipeAsync: returns the full recipe for a chosen card.
+/// </summary>
 public class ApiService : IApiService
 {
     private readonly ChatClient _chatClient;
@@ -16,6 +21,7 @@ public class ApiService : IApiService
         PropertyNameCaseInsensitive = true
     };
 
+    // Initialises the ApiService by reading Azure credentials from IConfiguration and creating the ChatClient for the configured deployment.
     public ApiService(IConfiguration config)
     {
         string endpoint = config["AzureOpenAI:Endpoint"]!;
@@ -30,7 +36,7 @@ public class ApiService : IApiService
         _chatClient = azureClient.GetChatClient(deploymentName);
     }
 
-    // Generate Recipe Cards
+    // Sends a request to the AI to generate 5 recipe cards based on the user's parameters.
     public async Task<(bool success, string errorMessage, List<RecipeCardModel> cards)> GenerateRecipeCardsAsync(RecipeParameterModel parameters)
     {
         try
@@ -43,8 +49,8 @@ public class ApiService : IApiService
                 new UserChatMessage(userPrompt)
             );
 
+            // Clean and deserialise the JSON response into a list of recipe cards
             string rawJson = CleanJson(completion.Content[0].Text);
-
             List<RecipeCardModel>? cards = JsonSerializer.Deserialize<List<RecipeCardModel>>(rawJson, JsonOptions);
 
             if (cards is null || cards.Count == 0)
@@ -58,7 +64,7 @@ public class ApiService : IApiService
         }
     }
 
-    // Generate full recipe
+    // Sends a request to the AI to generate the full detailed recipe
     public async Task<(bool success, string errorMessage, RecipeOutputModel? output)> GenerateRecipeAsync(RecipeCardModel chosenCard, RecipeParameterModel parameters)
     {
         try
@@ -71,8 +77,8 @@ public class ApiService : IApiService
                 new UserChatMessage(userPrompt)
             );
 
+            // Clean and deserialise the JSON response into a full recipe model
             string rawJson = CleanJson(completion.Content[0].Text);
-
             RecipeOutputModel? output = JsonSerializer.Deserialize<RecipeOutputModel>(rawJson, JsonOptions);
 
             if (output is null)
@@ -86,6 +92,7 @@ public class ApiService : IApiService
         }
     }
 
+    // System prompt for Step 1. Tells AI to return 5 recipe cards as a raw JSON array matching the RecipeCardModel structure.
     private static string BuildCardSystemPrompt() => """
 		You are a recipe generator. When asked, you return exactly 5 recipe cards
 		as a valid JSON array and nothing else. no preamble, no explanation, no markdown fences.
@@ -107,6 +114,9 @@ public class ApiService : IApiService
 		Return exactly 5 varied and distinct recipes.
 		""";
 
+
+    /// System prompt for Step 2. Instructs the AI to return a single full recipe as a raw JSON object matching the RecipeOutputModel structure.
+  
     private static string BuildFullRecipeSystemPrompt() => """
 		You are a recipe generator. When asked, you return a single full recipe as a
 		valid JSON object and nothing else. no preamble, no explanation, no markdown fences.
@@ -144,6 +154,8 @@ public class ApiService : IApiService
 		}
 		""";
 
+   
+    /// Builds the user prompt for Step 1 from user's selected parameters. Only includes dietary/allergy flags if they are set.
     private static string BuildUserPrompt(RecipeParameterModel p)
     {
         List<string> parts =
@@ -170,6 +182,7 @@ public class ApiService : IApiService
         return string.Join(" ", parts);
     }
 
+    /// Builds the user prompt for Step 2 using the chosen card as the basis
     private static string BuildFullRecipeUserPrompt(RecipeCardModel card, RecipeParameterModel p)
     {
         List<string> parts =
@@ -194,6 +207,8 @@ public class ApiService : IApiService
         return string.Join(" ", parts);
     }
 
+    
+    // Strips markdown code fences from the AI response if present.
     private static string CleanJson(string raw) =>
         raw.Replace("```json", string.Empty)
            .Replace("```", string.Empty)

@@ -1,5 +1,5 @@
 ﻿namespace VibeCooking.Models;
-// Model for the initial recipes that are returned by AI
+// Model for the initial 5 recipes that are returned by AI
 public class RecipeCardModel
 {
     public string RecipeName { get; set; } = string.Empty;

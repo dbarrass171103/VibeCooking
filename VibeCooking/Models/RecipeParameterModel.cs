@@ -55,6 +55,7 @@ public enum CuisineType
     Vietnamese
 }
 
+// Holds user selected parameters. Passes to the API to build prompt to be sent to AI
 public class RecipeParameterModel
 {
 	public List<string> Ingredients { get; set; } = new();
