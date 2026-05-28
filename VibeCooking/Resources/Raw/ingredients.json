@@ -1,0 +1,340 @@
+[
+    {
+        "Name": "Chicken",
+        "Category": "Meat"
+    },
+    {
+        "Name": "Beef",
+        "Category": "Meat"
+    },
+    {
+        "Name": "Pork",
+        "Category": "Meat"
+    },
+    {
+        "Name": "Lamb",
+        "Category": "Meat"
+    },
+    {
+        "Name": "Turkey",
+        "Category": "Meat"
+    },
+    {
+        "Name": "Bacon",
+        "Category": "Meat"
+    },
+    {
+        "Name": "Sausage",
+        "Category": "Meat"
+    },
+    {
+        "Name": "Salmon",
+        "Category": "Meat"
+    },
+    {
+        "Name": "Tuna",
+        "Category": "Meat"
+    },
+    {
+        "Name": "Prawns",
+        "Category": "Meat"
+    },
+    {
+        "Name": "Cod",
+        "Category": "Meat"
+    },
+    {
+        "Name": "Mince",
+        "Category": "Meat"
+    },
+
+    {
+        "Name": "Onion",
+        "Category": "Vegetables"
+    },
+    {
+        "Name": "Garlic",
+        "Category": "Vegetables"
+    },
+    {
+        "Name": "Tomato",
+        "Category": "Vegetables"
+    },
+    {
+        "Name": "Potato",
+        "Category": "Vegetables"
+    },
+    {
+        "Name": "Carrot",
+        "Category": "Vegetables"
+    },
+    {
+        "Name": "Broccoli",
+        "Category": "Vegetables"
+    },
+    {
+        "Name": "Spinach",
+        "Category": "Vegetables"
+    },
+    {
+        "Name": "Pepper",
+        "Category": "Vegetables"
+    },
+    {
+        "Name": "Mushroom",
+        "Category": "Vegetables"
+    },
+    {
+        "Name": "Courgette",
+        "Category": "Vegetables"
+    },
+    {
+        "Name": "Aubergine",
+        "Category": "Vegetables"
+    },
+    {
+        "Name": "Leek",
+        "Category": "Vegetables"
+    },
+    {
+        "Name": "Celery",
+        "Category": "Vegetables"
+    },
+    {
+        "Name": "Sweetcorn",
+        "Category": "Vegetables"
+    },
+    {
+        "Name": "Peas",
+        "Category": "Vegetables"
+    },
+    {
+        "Name": "Green Beans",
+        "Category": "Vegetables"
+    },
+
+    {
+        "Name": "Lemon",
+        "Category": "Fruit"
+    },
+    {
+        "Name": "Lime",
+        "Category": "Fruit"
+    },
+    {
+        "Name": "Apple",
+        "Category": "Fruit"
+    },
+    {
+        "Name": "Banana",
+        "Category": "Fruit"
+    },
+    {
+        "Name": "Avocado",
+        "Category": "Fruit"
+    },
+    {
+        "Name": "Mango",
+        "Category": "Fruit"
+    },
+    {
+        "Name": "Pineapple",
+        "Category": "Fruit"
+    },
+
+    {
+        "Name": "Milk",
+        "Category": "Dairy"
+    },
+    {
+        "Name": "Butter",
+        "Category": "Dairy"
+    },
+    {
+        "Name": "Cheddar",
+        "Category": "Dairy"
+    },
+    {
+        "Name": "Parmesan",
+        "Category": "Dairy"
+    },
+    {
+        "Name": "Mozzarella",
+        "Category": "Dairy"
+    },
+    {
+        "Name": "Cream",
+        "Category": "Dairy"
+    },
+    {
+        "Name": "Yoghurt",
+        "Category": "Dairy"
+    },
+    {
+        "Name": "Eggs",
+        "Category": "Dairy"
+    },
+    {
+        "Name": "Cream Cheese",
+        "Category": "Dairy"
+    },
+    {
+        "Name": "Sour Cream",
+        "Category": "Dairy"
+    },
+
+    {
+        "Name": "Rice",
+        "Category": "Grains"
+    },
+    {
+        "Name": "Pasta",
+        "Category": "Grains"
+    },
+    {
+        "Name": "Bread",
+        "Category": "Grains"
+    },
+    {
+        "Name": "Noodles",
+        "Category": "Grains"
+    },
+    {
+        "Name": "Flour",
+        "Category": "Grains"
+    },
+    {
+        "Name": "Oats",
+        "Category": "Grains"
+    },
+    {
+        "Name": "Couscous",
+        "Category": "Grains"
+    },
+    {
+        "Name": "Quinoa",
+        "Category": "Grains"
+    },
+
+    {
+        "Name": "Salt",
+        "Category": "Seasonings"
+    },
+    {
+        "Name": "Black Pepper",
+        "Category": "Seasonings"
+    },
+    {
+        "Name": "Paprika",
+        "Category": "Seasonings"
+    },
+    {
+        "Name": "Cumin",
+        "Category": "Seasonings"
+    },
+    {
+        "Name": "Turmeric",
+        "Category": "Seasonings"
+    },
+    {
+        "Name": "Chilli Flakes",
+        "Category": "Seasonings"
+    },
+    {
+        "Name": "Oregano",
+        "Category": "Seasonings"
+    },
+    {
+        "Name": "Basil",
+        "Category": "Seasonings"
+    },
+    {
+        "Name": "Thyme",
+        "Category": "Seasonings"
+    },
+    {
+        "Name": "Rosemary",
+        "Category": "Seasonings"
+    },
+    {
+        "Name": "Coriander",
+        "Category": "Seasonings"
+    },
+    {
+        "Name": "Cinnamon",
+        "Category": "Seasonings"
+    },
+    {
+        "Name": "Garlic Powder",
+        "Category": "Seasonings"
+    },
+    {
+        "Name": "Onion Powder",
+        "Category": "Seasonings"
+    },
+    {
+        "Name": "Curry Powder",
+        "Category": "Seasonings"
+    },
+    {
+        "Name": "Garam Masala",
+        "Category": "Seasonings"
+    },
+
+    {
+        "Name": "Olive Oil",
+        "Category": "OilsAndCondiments"
+    },
+    {
+        "Name": "Vegetable Oil",
+        "Category": "OilsAndCondiments"
+    },
+    {
+        "Name": "Sesame Oil",
+        "Category": "OilsAndCondiments"
+    },
+    {
+        "Name": "Soy Sauce",
+        "Category": "OilsAndCondiments"
+    },
+    {
+        "Name": "Worcestershire Sauce",
+        "Category": "OilsAndCondiments"
+    },
+    {
+        "Name": "Hot Sauce",
+        "Category": "OilsAndCondiments"
+    },
+    {
+        "Name": "Ketchup",
+        "Category": "OilsAndCondiments"
+    },
+    {
+        "Name": "Mayonnaise",
+        "Category": "OilsAndCondiments"
+    },
+    {
+        "Name": "Mustard",
+        "Category": "OilsAndCondiments"
+    },
+    {
+        "Name": "Honey",
+        "Category": "OilsAndCondiments"
+    },
+    {
+        "Name": "Vinegar",
+        "Category": "OilsAndCondiments"
+    },
+    {
+        "Name": "Balsamic Vinegar",
+        "Category": "OilsAndCondiments"
+    },
+    {
+        "Name": "Fish Sauce",
+        "Category": "OilsAndCondiments"
+    },
+    {
+        "Name": "Oyster Sauce",
+        "Category": "OilsAndCondiments"
+    }
+]
