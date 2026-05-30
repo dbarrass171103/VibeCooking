@@ -271,15 +271,6 @@
 
     @if (ViewModel.RecipeCards.Count > 0)
     {
-        <div style="display:flex; justify-content:space-between; align-items:center;" class="mb-3">
-            <MudText Typo="Typo.h6">Suggested Recipes</MudText>
-            <MudButton Variant="Variant.Outlined"
-                       Color="Color.Primary"
-                       Disabled="@ViewModel.IsGeneratingCards"
-                       OnClick="Reroll">
-                Reroll
-            </MudButton>
-        </div>
 
         <MudGrid>
             @foreach (var card in ViewModel.RecipeCards)
@@ -348,14 +339,6 @@
     private async Task GenerateCards()
     {
         await ViewModel.GenerateCardsAsync();
-
-        if (ViewModel.ErrorMessage is not null)
-            Snackbar.Add(ViewModel.ErrorMessage, Severity.Error);
-    }
-
-    private async Task Reroll()
-    {
-        await ViewModel.RerollAsync();
 
         if (ViewModel.ErrorMessage is not null)
             Snackbar.Add(ViewModel.ErrorMessage, Severity.Error);
