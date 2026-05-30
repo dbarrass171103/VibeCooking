@@ -17,15 +17,15 @@ namespace VibeCooking
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 });
 
-            // Load credentials
+            // Load credentials from appsettings.json embedded resource
+            var assembly = typeof(MauiProgram).Assembly;
+            using var stream = assembly.GetManifestResourceStream("VibeCooking.appsettings.json");
             var config = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: true)
+                .AddJsonStream(stream!)
                 .Build();
-
             builder.Configuration.AddConfiguration(config);
 
             builder.Services.AddMauiBlazorWebView();
-
             builder.Services.AddMudServices(config =>
             {
                 config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomCenter;
@@ -34,7 +34,6 @@ namespace VibeCooking
                 config.SnackbarConfiguration.ShowTransitionDuration = 500;
                 config.SnackbarConfiguration.HideTransitionDuration = 500;
             });
-
             builder.Services.AddDependencies();
 
 #if DEBUG

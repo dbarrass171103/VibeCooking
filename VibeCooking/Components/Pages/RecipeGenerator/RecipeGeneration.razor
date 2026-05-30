@@ -1,0 +1,401 @@
+@* Recipe generation page. User configures parameters, generates 5 recipe cards,
+   can reroll, then selects a card to generate the full recipe. *@
+
+@page "/recipe-generation"
+
+@using VibeCooking.Models
+@using VibeCooking.ViewModels
+
+@inject RecipeGenerationViewModel ViewModel
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4 mb-8">
+
+    <MudText Typo="Typo.h4" GutterBottom="false">Generate a Recipe</MudText>
+    <MudText Class="mt-1 mb-6" Typo="Typo.body1" Color="Color.Secondary">
+        Customise your preferences and we'll suggest recipes based on your ingredients.
+    </MudText>
+
+    @* Parameters *@
+
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-4">Preferences</MudText>
+
+        <MudGrid>
+
+            @* Meal Type *@
+            <MudItem xs="12" sm="6">
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Meal Type</MudText>
+                <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                    @foreach (var meal in ViewModel.MealTypes)
+                    {
+                        <MudButton Size="Size.Small"
+                                   Variant="@(ViewModel.Parameters.MealType == meal ? Variant.Filled : Variant.Outlined)"
+                                   Color="Color.Primary"
+                                   OnClick="@(() => ViewModel.Parameters.MealType = meal)">
+                            @meal
+                        </MudButton>
+                    }
+                </div>
+            </MudItem>
+
+            @* Difficulty *@
+            <MudItem xs="12" sm="6">
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Difficulty</MudText>
+                <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                    @foreach (var diff in ViewModel.Difficulties)
+                    {
+                        <MudButton Size="Size.Small"
+                                   Variant="@(ViewModel.Parameters.Difficulty == diff ? Variant.Filled : Variant.Outlined)"
+                                   Color="Color.Primary"
+                                   OnClick="@(() => ViewModel.Parameters.Difficulty = diff)">
+                            @diff
+                        </MudButton>
+                    }
+                </div>
+            </MudItem>
+
+            @* Cook Time *@
+            <MudItem xs="12" sm="6">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <MudText Typo="Typo.subtitle2">
+                        Cook Time @(ViewModel.Parameters.AnyCookTime ? "— Any" : $"— {ViewModel.Parameters.CookTimeMinutes} mins")
+                    </MudText>
+                    <MudButton Size="Size.Small"
+                               Variant="@(ViewModel.Parameters.AnyCookTime ? Variant.Filled : Variant.Outlined)"
+                               Color="Color.Primary"
+                               OnClick="@(() => ViewModel.Parameters.AnyCookTime = !ViewModel.Parameters.AnyCookTime)">
+                        Any
+                    </MudButton>
+                </div>
+                <MudSlider T="int"
+                           @bind-Value="ViewModel.Parameters.CookTimeMinutes"
+                           Min="10" Max="120" Step="5"
+                           Color="Color.Primary"
+                           Disabled="@ViewModel.Parameters.AnyCookTime" />
+            </MudItem>
+
+            @* Servings *@
+            <MudItem xs="12" sm="6">
+                <MudText Typo="Typo.subtitle2" Class="mb-1">
+                    Servings — @ViewModel.Parameters.Servings
+                </MudText>
+                <MudSlider T="int"
+                           @bind-Value="ViewModel.Parameters.Servings"
+                           Min="1" Max="10" Step="1"
+                           Color="Color.Primary" />
+            </MudItem>
+
+            @* Cuisine Type *@
+            <MudItem xs="12">
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Cuisine</MudText>
+                <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                    @foreach (var cuisine in ViewModel.CuisineTypes)
+                    {
+                        <MudButton Size="Size.Small"
+                                   Variant="@(ViewModel.Parameters.CuisineType == cuisine ? Variant.Filled : Variant.Outlined)"
+                                   Color="Color.Secondary"
+                                   OnClick="@(() => ViewModel.Parameters.CuisineType = cuisine)">
+                            @cuisine
+                        </MudButton>
+                    }
+                </div>
+            </MudItem>
+
+            @* Ingredient Usage *@
+            <MudItem xs="12">
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Ingredient Usage</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+                    How strictly should recipes stick to your ingredients?
+                </MudText>
+                <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                    @foreach (var option in ViewModel.IngredientUsageOptions)
+                    {
+                        <MudButton Size="Size.Small"
+                                   Variant="@(ViewModel.Parameters.IngredientUsage == option ? Variant.Filled : Variant.Outlined)"
+                                   Color="Color.Primary"
+                                   OnClick="@(() => ViewModel.Parameters.IngredientUsage = option)">
+                            @option
+                        </MudButton>
+                    }
+                </div>
+            </MudItem>
+
+        </MudGrid>
+    </MudPaper>
+
+    @*Dietary Requireemnts *@
+
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-4">Dietary Requirements</MudText>
+
+        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            <MudButton Size="Size.Small"
+                       Variant="@(ViewModel.Parameters.Vegetarian ? Variant.Filled : Variant.Outlined)"
+                       Color="Color.Primary"
+                       OnClick="@(() => ViewModel.Parameters.Vegetarian = !ViewModel.Parameters.Vegetarian)">
+                Vegetarian
+            </MudButton>
+
+            <MudButton Size="Size.Small"
+                       Variant="@(ViewModel.Parameters.Vegan ? Variant.Filled : Variant.Outlined)"
+                       Color="Color.Primary"
+                       OnClick="@(() => ViewModel.Parameters.Vegan = !ViewModel.Parameters.Vegan)">
+                Vegan
+            </MudButton>
+
+            <MudButton Size="Size.Small"
+                       Variant="@(ViewModel.Parameters.GlutenFree ? Variant.Filled : Variant.Outlined)"
+                       Color="Color.Primary"
+                       OnClick="@(() => ViewModel.Parameters.GlutenFree = !ViewModel.Parameters.GlutenFree)">
+                Gluten Free
+            </MudButton>
+
+            <MudButton Size="Size.Small"
+                       Variant="@(ViewModel.Parameters.DairyFree ? Variant.Filled : Variant.Outlined)"
+                       Color="Color.Primary"
+                       OnClick="@(() => ViewModel.Parameters.DairyFree = !ViewModel.Parameters.DairyFree)">
+                Dairy Free
+            </MudButton>
+        </div>
+    </MudPaper>
+
+    @* Allergens*@
+
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">Allergens</MudText>
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-3">
+            Tap to exclude from generated recipes
+        </MudText>
+
+        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;">
+            @foreach (var allergen in ViewModel.PresetAllergens)
+            {
+                <MudButton Size="Size.Small"
+                           Variant="@(ViewModel.IsAllergenSelected(allergen) ? Variant.Filled : Variant.Outlined)"
+                           Color="Color.Error"
+                           OnClick="@(() => ViewModel.TogglePresetAllergen(allergen))">
+                    @allergen
+                </MudButton>
+            }
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px;">
+            <MudTextField T="string"
+                          @bind-Value="_customAllergenInput"
+                          @bind-Value:after="() => _showAllergenError = false"
+                          Label="Add other allergen"
+                          Placeholder="e.g. Kiwi"
+                          Variant="Variant.Outlined"
+                          Immediate="true"
+                          Error="@_showAllergenError"
+                          ErrorText="Already in list"
+                          Style="flex:1"
+                          OnKeyUp="HandleAllergenKeyUp" />
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Error"
+                       OnClick="AddCustomAllergen">
+                Add
+            </MudButton>
+        </div>
+
+        @if (ViewModel.CustomAllergens.Count > 0)
+        {
+            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;">
+                @foreach (var allergen in ViewModel.CustomAllergens)
+                {
+                    <MudChip T="string"
+                             Color="Color.Error"
+                             OnClose="@(() => ViewModel.RemoveCustomAllergen(allergen))">
+                        @allergen
+                    </MudChip>
+                }
+            </div>
+        }
+    </MudPaper>
+
+    @* Additional Notes *@
+
+    <MudPaper Class="pa-4 mb-6" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">Additional Notes</MudText>
+        <MudTextField T="string"
+                      @bind-Value="ViewModel.Parameters.AdditionalNotes"
+                      Label="Anything else?"
+                      Placeholder="e.g. I'd like something comforting, no spicy food"
+                      Variant="Variant.Outlined"
+                      Lines="3"
+                      FullWidth="true" />
+    </MudPaper>
+
+    @* Number of Recipe Cards *@
+    <MudItem xs="12" sm="6">
+        <MudText Typo="Typo.subtitle2" Class="mb-1">
+            Recipe Cards — @ViewModel.Parameters.CardCount
+        </MudText>
+        <MudSlider T="int"
+            @bind-Value="ViewModel.Parameters.CardCount"
+            Min="1" Max="5" Step="1"
+            Color="Color.Primary" />
+    </MudItem>
+
+    @* Generate Button *@
+
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               Size="Size.Large"
+               FullWidth="true"
+               Disabled="@ViewModel.IsGeneratingCards"
+               OnClick="GenerateCards"
+               Class="mb-6">
+        @if (ViewModel.IsGeneratingCards)
+        {
+            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            <span>Generating...</span>
+        }
+        else
+        {
+            <span>Generate Recipes</span>
+        }
+    </MudButton>
+
+    @* Error *@
+
+    @if (ViewModel.ErrorMessage is not null)
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4">@ViewModel.ErrorMessage</MudAlert>
+    }
+
+    @* Recipe Cards *@
+
+    @if (ViewModel.RecipeCards.Count > 0)
+    {
+        <div style="display:flex; justify-content:space-between; align-items:center;" class="mb-3">
+            <MudText Typo="Typo.h6">Suggested Recipes</MudText>
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Disabled="@ViewModel.IsGeneratingCards"
+                       OnClick="Reroll">
+                Reroll
+            </MudButton>
+        </div>
+
+        <MudGrid>
+            @foreach (var card in ViewModel.RecipeCards)
+            {
+                bool isSelected = ViewModel.SelectedCard == card;
+
+                <MudItem xs="12" sm="6" md="4">
+                    <MudPaper Class="@($"pa-4 {(isSelected ? "mud-border-primary" : "")}")"
+                              Elevation="@(isSelected ? 4 : 1)"
+                              Style="cursor:pointer; border: 2px solid transparent; transition: all 0.2s;"
+                              @onclick="@(() => SelectCard(card))">
+
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                            <MudText Typo="Typo.subtitle1" Style="font-weight:600;">@card.RecipeName</MudText>
+                            @if (isSelected && ViewModel.IsGeneratingRecipe)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                            }
+                        </div>
+
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+                            @card.Description
+                        </MudText>
+
+                        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
+                            <MudChip T="string" Size="Size.Small" Color="Color.Primary">@card.CuisineType</MudChip>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Secondary">@card.Difficulty</MudChip>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Default">@card.MealType</MudChip>
+                        </div>
+
+                        <div style="display:flex; gap:16px;">
+                            <MudText Typo="Typo.caption">
+                                <MudIcon Icon="@Icons.Material.Filled.Timer" Size="Size.Small" />
+                                @card.CookTimeMinutes mins
+                            </MudText>
+                            <MudText Typo="Typo.caption">
+                                <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" />
+                                @card.Servings servings
+                            </MudText>
+                        </div>
+
+                        @if (card.Ingredients.Count > 0)
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                                @string.Join(", ", card.Ingredients.Take(5))
+                                @if (card.Ingredients.Count > 5)
+                                {
+                                    <span> +@(card.Ingredients.Count - 5) more</span>
+                                }
+                            </MudText>
+                        }
+
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+
+</MudContainer>
+
+@code {
+
+    private string _customAllergenInput = "";
+    private bool _showAllergenError = false;
+
+    private async Task GenerateCards()
+    {
+        await ViewModel.GenerateCardsAsync();
+
+        if (ViewModel.ErrorMessage is not null)
+            Snackbar.Add(ViewModel.ErrorMessage, Severity.Error);
+    }
+
+    private async Task Reroll()
+    {
+        await ViewModel.RerollAsync();
+
+        if (ViewModel.ErrorMessage is not null)
+            Snackbar.Add(ViewModel.ErrorMessage, Severity.Error);
+    }
+
+    private async Task SelectCard(RecipeCardModel card)
+    {
+        await ViewModel.SelectCardAsync(card);
+
+        if (ViewModel.ErrorMessage is not null)
+        {
+            Snackbar.Add(ViewModel.ErrorMessage, Severity.Error);
+            return;
+        }
+
+        if (ViewModel.GeneratedRecipe is not null)
+            Navigation.NavigateTo("/recipe-chat");
+    }
+
+    private void AddCustomAllergen()
+    {
+        if (string.IsNullOrWhiteSpace(_customAllergenInput))
+            return;
+
+        int countBefore = ViewModel.CustomAllergens.Count;
+        ViewModel.AddCustomAllergen(_customAllergenInput);
+
+        if (ViewModel.CustomAllergens.Count == countBefore)
+        {
+            _showAllergenError = true;
+            return;
+        }
+
+        _customAllergenInput = "";
+        _showAllergenError = false;
+    }
+
+    private void HandleAllergenKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            AddCustomAllergen();
+    }
+}
