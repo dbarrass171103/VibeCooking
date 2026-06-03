@@ -1,0 +1,308 @@
+@* Recipe chat page. Split into two tabs: AI chat and live recipe document. *@
+
+@page "/recipe-chat"
+
+@using VibeCooking.Models
+@using VibeCooking.ViewModels
+
+@inject RecipeChatViewModel ViewModel
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+@if (!ViewModel.IsReady)
+{
+    <MudContainer MaxWidth="MaxWidth.Small" Class="mt-8 text-center">
+        <MudText Typo="Typo.body1" Color="Color.Secondary">No recipe loaded.</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4"
+                   OnClick="@(() => Navigation.NavigateTo("/recipe-generation"))">
+            Go to Recipe Generation
+        </MudButton>
+    </MudContainer>
+}
+else
+{
+    <MudTabs Elevation="0" Rounded="false" ApplyEffectsToContainer="true" Class="mt-0"
+             @bind-ActivePanelIndex="_activeTab">
+
+        @* Recipe Tab *@
+
+        <MudTabPanel Text="Recipe" Icon="@Icons.Material.Filled.MenuBook">
+            <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4 mb-8">
+
+                @{
+                    var r = ViewModel.CurrentRecipe!;
+                }
+
+                @* Header *@
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px;">
+                    <MudText Typo="Typo.h5">@r.RecipeName</MudText>
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Bookmark"
+                               Size="Size.Small"
+                               OnClick="OpenSaveDialog">
+                        Save
+                    </MudButton>
+                </div>
+
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">@r.Description</MudText>
+
+                <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px;">
+                    <MudChip T="string" Size="Size.Small" Color="Color.Primary">@r.CuisineType</MudChip>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Secondary">@r.Difficulty</MudChip>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Default">@r.MealType</MudChip>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Default">
+                        <MudIcon Icon="@Icons.Material.Filled.Timer" Size="Size.Small" Class="mr-1" />
+                        @r.CookTimeMinutes mins
+                    </MudChip>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Default">
+                        <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" Class="mr-1" />
+                        @r.Servings servings
+                    </MudChip>
+                </div>
+
+                @* Chat hint *@
+                @if (_showChatHint)
+                {
+                    <MudAlert Severity="Severity.Info"
+                              ShowCloseIcon="true"
+                              CloseIconClicked="@(() => _showChatHint = false)"
+                              Class="mb-4">
+                        Switch to the <strong>Chat</strong> tab to ask questions or make changes to this recipe.
+                    </MudAlert>
+                }
+
+                @* Ingredients *@
+                <MudText Typo="Typo.h6" Class="mb-2">Ingredients</MudText>
+                <MudPaper Class="pa-4 mb-4" Elevation="1">
+                    @foreach (var ingredient in r.Ingredients)
+                    {
+                        <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--mud-palette-divider);">
+                            <MudText Typo="Typo.body2">
+                                @ingredient.Name
+                                @if (ingredient.IsOptional)
+                                {
+                                    <span style="opacity:0.6;"> (optional)</span>
+                                }
+                            </MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">@ingredient.Quantity</MudText>
+                        </div>
+                    }
+                </MudPaper>
+
+                @* Equipment *@
+                @if (r.Equipment.Count > 0)
+                {
+                    <MudText Typo="Typo.h6" Class="mb-2">Equipment</MudText>
+                    <MudPaper Class="pa-4 mb-4" Elevation="1">
+                        @foreach (var item in r.Equipment)
+                        {
+                            <MudText Typo="Typo.body2" Class="mb-1">• @item</MudText>
+                        }
+                    </MudPaper>
+                }
+
+                @* Instructions *@
+                <MudText Typo="Typo.h6" Class="mb-2">Instructions</MudText>
+                <MudPaper Class="pa-4 mb-4" Elevation="1">
+                    @foreach (var (instruction, index) in r.Instructions.Select((item, i) => (item, i)))
+                    {
+                        <div style="display:flex; gap:12px; margin-bottom:12px;">
+                            <MudText Typo="Typo.subtitle2"
+                                     Style="min-width:28px; color:var(--mud-palette-primary);">
+                                @(index + 1).
+                            </MudText>
+                            <MudText Typo="Typo.body2">@instruction</MudText>
+                        </div>
+                    }
+                </MudPaper>
+
+                @* Nutrition *@
+                <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:4px;">
+                    <MudText Typo="Typo.h6">Nutrition per Serving</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        AI estimate — may not be accurate
+                    </MudText>
+                </div>
+                <MudPaper Class="pa-3 mb-4" Elevation="1">
+                    <div style="display:flex; flex-wrap:wrap; gap:0;">
+                        @RenderNutritionItem("Calories", $"{r.NutritionPerServing.CaloriesKcal} kcal")
+                        @RenderNutritionItem("Protein", $"{r.NutritionPerServing.ProteinG}g")
+                        @RenderNutritionItem("Carbs", $"{r.NutritionPerServing.CarbsG}g")
+                        @RenderNutritionItem("Fat", $"{r.NutritionPerServing.FatG}g")
+                        @RenderNutritionItem("Fibre", $"{r.NutritionPerServing.FibreG}g")
+                        @RenderNutritionItem("Sugar", $"{r.NutritionPerServing.SugarG}g")
+                        @RenderNutritionItem("Salt", $"{r.NutritionPerServing.SaltG}g")
+                    </div>
+                </MudPaper>
+
+                @* Storage *@
+                @if (!string.IsNullOrWhiteSpace(r.StorageAdvice))
+                {
+                    <MudText Typo="Typo.h6" Class="mb-2">Storage</MudText>
+                    <MudPaper Class="pa-4 mb-4" Elevation="1">
+                        <MudText Typo="Typo.body2">@r.StorageAdvice</MudText>
+                    </MudPaper>
+                }
+
+                @* Substitutions *@
+                @if (r.Substitutions.Count > 0)
+                {
+                    <MudText Typo="Typo.h6" Class="mb-2">Substitutions</MudText>
+                    <MudPaper Class="pa-4 mb-4" Elevation="1">
+                        @foreach (var sub in r.Substitutions)
+                        {
+                            <MudText Typo="Typo.body2" Class="mb-1">• @sub</MudText>
+                        }
+                    </MudPaper>
+                }
+
+            </MudContainer>
+        </MudTabPanel>
+
+        @*Chat Tab*@
+
+        <MudTabPanel Text="Chat" Icon="@Icons.Material.Filled.Chat">
+            <div style="display:flex; flex-direction:column; height:calc(100vh - 160px);">
+
+                @* Message list *@
+                <div style="flex:1; overflow-y:auto; padding:16px;" id="chat-scroll">
+                    @if (ViewModel.Messages.Count == 0)
+                    {
+                        <div style="text-align:center; margin-top:32px;">
+                            <MudText Typo="Typo.body1" Color="Color.Secondary">
+                                Ask me anything about your recipe!
+                            </MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+                                Try: "Make it vegetarian", "Swap the mushrooms", "Adjust for 2 servings"
+                            </MudText>
+                        </div>
+                    }
+
+                    @foreach (var message in ViewModel.Messages)
+                    {
+                        <div style="display:flex; justify-content:@(message.IsUser ? "flex-end" : "flex-start"); margin-bottom:12px;">
+                            <MudPaper Class="pa-3"
+                                      Elevation="1"
+                                      Style="@($"max-width:80%; border-radius:12px; background:{(message.IsUser ? "var(--mud-palette-primary)" : "var(--mud-palette-surface)")}; color:{(message.IsUser ? "white" : "inherit")}")">
+                                <MudText Typo="Typo.body2">@message.Content</MudText>
+                            </MudPaper>
+                        </div>
+                    }
+
+                    @if (ViewModel.IsSending)
+                    {
+                        <div style="display:flex; justify-content:flex-start; margin-bottom:12px;">
+                            <MudPaper Class="pa-3" Elevation="1" Style="border-radius:12px;">
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                            </MudPaper>
+                        </div>
+                    }
+
+                    @if (ViewModel.ErrorMessage is not null)
+                    {
+                        <MudAlert Severity="Severity.Error" Class="mt-2">@ViewModel.ErrorMessage</MudAlert>
+                    }
+                </div>
+
+                @* Input bar *@
+                <div style="padding:12px 16px; border-top:1px solid var(--mud-palette-divider);">
+                    <div style="display:flex; gap:8px; align-items:flex-end;">
+                        <MudTextField T="string"
+                                      @bind-Value="_messageInput"
+                                      Placeholder="Ask something about your recipe..."
+                                      Variant="Variant.Outlined"
+                                      Lines="2"
+                                      AutoGrow="true"
+                                      Immediate="true"
+                                      FullWidth="true"
+                                      Disabled="@ViewModel.IsSending"
+                                      OnKeyUp="HandleKeyUp" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Send"
+                                       Color="Color.Primary"
+                                       Variant="Variant.Filled"
+                                       Disabled="@(ViewModel.IsSending || string.IsNullOrWhiteSpace(_messageInput))"
+                                       OnClick="SendMessage"
+                                       Style="margin-bottom:4px;" />
+                    </div>
+                </div>
+
+            </div>
+        </MudTabPanel>
+
+    </MudTabs>
+}
+
+@code {
+
+    private string _messageInput = "";
+    private bool _showChatHint = true;
+    private int _activeTab = 0; // 0 = Recipe, 1 = Chat
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.InitAsync();
+
+        if (!ViewModel.IsReady)
+            Snackbar.Add("No recipe loaded. Please generate a recipe first.", Severity.Warning);
+    }
+
+    private async Task OpenSaveDialog()
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("SaveName", ViewModel.CurrentRecipe?.RecipeName ?? "");
+
+        var dialog = await DialogService.ShowAsync<SaveRecipeDialog>(
+            "Save Recipe",
+            parameters,
+            new DialogOptions
+            {
+                MaxWidth = MaxWidth.ExtraSmall,
+                FullWidth = true,
+                CloseOnEscapeKey = true
+            });
+
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is SaveRecipeDialog.SaveRecipeResult saveResult)
+        {
+            await ViewModel.SaveRecipeAsync(saveResult.SaveName, saveResult.ImageBase64, saveResult.ImageMimeType);
+            Snackbar.Add($"\"{saveResult.SaveName}\" saved to My Recipes.", Severity.Success);
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(_messageInput))
+            return;
+
+        string message = _messageInput;
+        _messageInput = "";
+
+        await ViewModel.SendMessageAsync(message);
+
+        if (ViewModel.ErrorMessage is not null)
+            Snackbar.Add(ViewModel.ErrorMessage, Severity.Error);
+
+        // Scroll the chat container to the bottom after the new message renders.
+        await JS.InvokeVoidAsync("scrollToBottom", "chat-scroll");
+
+        StateHasChanged();
+    }
+
+    private async Task HandleKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+            await SendMessage();
+    }
+
+    private RenderFragment RenderNutritionItem(string label, string value) => __builder =>
+    {
+        <div style="width:25%; padding:6px 8px; box-sizing:border-box;">
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Style="display:block;">@label</MudText>
+            <MudText Typo="Typo.subtitle2">@value</MudText>
+        </div>;
+    };
+}

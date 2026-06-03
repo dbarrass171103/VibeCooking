@@ -87,6 +87,17 @@
                            Color="Color.Primary" />
             </MudItem>
 
+            @* Number of Recipe Cards *@
+            <MudItem xs="12" sm="6">
+                <MudText Typo="Typo.subtitle2" Class="mb-1">
+                    Recipe Cards — @ViewModel.Parameters.CardCount
+                </MudText>
+                <MudSlider T="int"
+                           @bind-Value="ViewModel.Parameters.CardCount"
+                           Min="1" Max="5" Step="1"
+                           Color="Color.Primary" />
+            </MudItem>
+
             @* Cuisine Type *@
             <MudItem xs="12">
                 <MudText Typo="Typo.subtitle2" Class="mb-2">Cuisine</MudText>
@@ -229,17 +240,6 @@
                       FullWidth="true" />
     </MudPaper>
 
-    @* Number of Recipe Cards *@
-    <MudItem xs="12" sm="6">
-        <MudText Typo="Typo.subtitle2" Class="mb-1">
-            Recipe Cards — @ViewModel.Parameters.CardCount
-        </MudText>
-        <MudSlider T="int"
-            @bind-Value="ViewModel.Parameters.CardCount"
-            Min="1" Max="5" Step="1"
-            Color="Color.Primary" />
-    </MudItem>
-
     @* Generate Button *@
 
     <MudButton Variant="Variant.Filled"
@@ -271,7 +271,6 @@
 
     @if (ViewModel.RecipeCards.Count > 0)
     {
-
         <MudGrid>
             @foreach (var card in ViewModel.RecipeCards)
             {

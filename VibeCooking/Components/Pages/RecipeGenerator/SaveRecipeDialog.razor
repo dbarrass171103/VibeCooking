@@ -1,0 +1,142 @@
+@* Dialog for naming and saving a recipe *@
+
+@using Microsoft.Maui.Storage
+
+<MudDialog>
+    <DialogContent>
+
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+            Give this recipe a name to save it to My Recipes.
+        </MudText>
+
+        <MudTextField T="string"
+                      @ref="_nameField"
+                      @bind-Value="SaveName"
+                      @bind-Value:after="() => _showError = false"
+                      Label="Recipe Name"
+                      Variant="Variant.Outlined"
+                      Immediate="true"
+                      FullWidth="true"
+                      Error="@_showError"
+                      ErrorText="Please enter a name"
+                      OnKeyUp="HandleKeyUp"
+                      Class="mb-4" />
+
+        @* Optional photo *@
+        <MudText Typo="Typo.subtitle2" Class="mb-2">Photo (optional)</MudText>
+
+        @if (_imageBase64 is not null)
+        {
+            <div style="position:relative; margin-bottom:8px;">
+                <img src="data:@_imageMimeType;base64,@_imageBase64"
+                     style="width:100%; max-height:200px; object-fit:cover; border-radius:8px;" />
+                <MudIconButton Icon="@Icons.Material.Filled.Close"
+                               Size="Size.Small"
+                               Color="Color.Error"
+                               Style="position:absolute; top:4px; right:4px; background:rgba(0,0,0,0.45);"
+                               OnClick="RemoveImage" />
+            </div>
+        }
+
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.AddAPhoto"
+                   FullWidth="true"
+                   OnClick="PickImageAsync"
+                   Disabled="@_isPickingImage">
+            @(_imageBase64 is null ? "Add Photo" : "Change Photo")
+        </MudButton>
+
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save">
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public string SaveName { get; set; } = "";
+
+    public record SaveRecipeResult(string SaveName, string? ImageBase64, string? ImageMimeType);
+    private MudTextField<string>? _nameField;
+    private bool _showError = false;
+    private bool _isPickingImage = false;
+    private string? _imageBase64;
+    private string? _imageMimeType;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _nameField is not null)
+        {
+            await Task.Delay(150);
+            await _nameField.FocusAsync();
+        }
+    }
+
+    private async Task PickImageAsync()
+    {
+        _isPickingImage = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await MediaPicker.Default.PickPhotoAsync(new MediaPickerOptions
+            {
+                Title = "Choose a photo"
+            });
+
+            if (result is not null)
+            {
+                using var stream = await result.OpenReadAsync();
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+                _imageBase64 = Convert.ToBase64String(ms.ToArray());
+                _imageMimeType = result.ContentType;
+            }
+        }
+        catch
+        {
+            // Picker cancelled or unavailable, leave unchanged
+        }
+        finally
+        {
+            _isPickingImage = false;
+            StateHasChanged();
+        }
+    }
+
+    private void RemoveImage()
+    {
+        _imageBase64 = null;
+        _imageMimeType = null;
+    }
+
+    private void Save()
+    {
+        if (string.IsNullOrWhiteSpace(SaveName))
+        {
+            _showError = true;
+            StateHasChanged();
+            return;
+        }
+
+        MudDialog.Close(DialogResult.Ok(
+            new SaveRecipeResult(SaveName.Trim(), _imageBase64, _imageMimeType)));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void HandleKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            Save();
+    }
+}

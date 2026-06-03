@@ -11,6 +11,7 @@ namespace VibeCooking.Services;
 /// Handles all communication with the Azure OpenAI API.
 /// Step 1 — GenerateRecipeCardsAsync: returns recipe cards based on user parameters.
 /// Step 2 — GenerateRecipeAsync: returns the full recipe for a chosen card.
+/// Step 3 — SendChatMessageAsync: handles multi-turn recipe chat.
 /// </summary>
 public class ApiService : IApiService
 {
@@ -50,10 +51,19 @@ public class ApiService : IApiService
             );
 
             string rawJson = CleanJson(completion.Content[0].Text);
-            List<RecipeCardModel>? cards = JsonSerializer.Deserialize<List<RecipeCardModel>>(rawJson, JsonOptions);
+
+            List<RecipeCardModel>? cards;
+            try
+            {
+                cards = JsonSerializer.Deserialize<List<RecipeCardModel>>(rawJson, JsonOptions);
+            }
+            catch (JsonException)
+            {
+                return (false, "The AI returned an unexpected format. Please try again.", new());
+            }
 
             if (cards is null || cards.Count == 0)
-                return (false, "Failed to deserialise recipe cards.", new());
+                return (false, "No recipe cards were returned. Please try again.", new());
 
             return (true, string.Empty, cards);
         }
@@ -77,10 +87,19 @@ public class ApiService : IApiService
             );
 
             string rawJson = CleanJson(completion.Content[0].Text);
-            RecipeOutputModel? output = JsonSerializer.Deserialize<RecipeOutputModel>(rawJson, JsonOptions);
+
+            RecipeOutputModel? output;
+            try
+            {
+                output = JsonSerializer.Deserialize<RecipeOutputModel>(rawJson, JsonOptions);
+            }
+            catch (JsonException)
+            {
+                return (false, "The AI returned an unexpected format. Please try again.", null);
+            }
 
             if (output is null)
-                return (false, "Failed to deserialise the full recipe.", null);
+                return (false, "No recipe was returned. Please try again.", null);
 
             return (true, string.Empty, output);
         }
@@ -90,8 +109,53 @@ public class ApiService : IApiService
         }
     }
 
-    // System prompt for Step 1
+    // Sends a chat message with full conversation history and current recipe state.
+    public async Task<(bool success, string errorMessage, ChatResponseModel? response)> SendChatMessageAsync(
+        List<ChatMessageModel> history,
+        RecipeOutputModel currentRecipe,
+        string userMessage)
+    {
+        try
+        {
+            // Build message list
+            var messages = new List<OpenAI.Chat.ChatMessage>
+            {
+                new SystemChatMessage(BuildChatSystemPrompt(currentRecipe))
+            };
+            foreach (ChatMessageModel msg in history)
+            {
+                if (msg.IsUser)
+                    messages.Add(new UserChatMessage(msg.Content));
+                else
+                    messages.Add(new AssistantChatMessage(msg.Content));
+            }
 
+            ChatCompletion completion = await _chatClient.CompleteChatAsync(messages);
+
+            string rawJson = CleanJson(completion.Content[0].Text);
+
+            ChatResponseModel? response;
+            try
+            {
+                response = JsonSerializer.Deserialize<ChatResponseModel>(rawJson, JsonOptions);
+            }
+            catch (JsonException)
+            {
+                return (false, "The AI returned an unexpected format. Please try again.", null);
+            }
+
+            if (response is null)
+                return (false, "No response was returned. Please try again.", null);
+
+            return (true, string.Empty, response);
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message, null);
+        }
+    }
+
+    // System prompt for Step 1
     private static string BuildCardSystemPrompt(int cardCount)
     {
         string cards = cardCount == 1 ? "1 recipe card" : $"{cardCount} recipe cards";
@@ -114,10 +178,7 @@ public class ApiService : IApiService
                "The Ingredients array should be a simple flat list of ingredient names only.\n" +
                $"Return exactly {recipes}.";
     }
-
-
     // System prompt for Step 2.
-
     private static string BuildFullRecipeSystemPrompt() => """
         You are a recipe generator. When asked, you return a single full recipe as a
         valid JSON object and nothing else. No preamble, no explanation, no markdown fences.
@@ -155,6 +216,31 @@ public class ApiService : IApiService
         }
         """;
 
+    // System prompt for the recipe chat.
+    private static string BuildChatSystemPrompt(RecipeOutputModel recipe)
+    {
+        string recipeJson = JsonSerializer.Serialize(recipe, new JsonSerializerOptions{WriteIndented = false,PropertyNamingPolicy = null});
+
+        return "You are a cooking assistant working with the user on a specific recipe.\n" +
+               "The current recipe state is provided below as JSON. The user may ask you to:\n" +
+               "- Modify ingredients or quantities\n" +
+               "- Substitute ingredients\n" +
+               "- Adjust servings\n" +
+               "- Change cooking methods or equipment\n" +
+               "- Simplify or clarify instructions\n" +
+               "- Answer general cooking questions about the recipe\n\n" +
+               "You must ALWAYS respond with a valid JSON object and nothing else.\n" +
+               "No preamble, no explanation outside the JSON, no markdown fences.\n\n" +
+               "The response must exactly match this structure:\n" +
+               "{\n" +
+               "  \"Reply\": \"Your conversational response to the user here\",\n" +
+               "  \"Recipe\": { ...full updated RecipeOutputModel... }\n" +
+               "}\n\n" +
+               "If the user's request does not change the recipe (e.g. a general question),\n" +
+               "return the recipe unchanged but still include it in full.\n\n" +
+               $"Current recipe:\n{recipeJson}";
+    }
+
     // Builds the user prompt for Step 1 from the user's selected parameters.
     private static string BuildUserPrompt(RecipeParameterModel p)
     {
@@ -169,7 +255,7 @@ public class ApiService : IApiService
         string cuisine = p.CuisineType == "Any" ? "any cuisine" : p.CuisineType;
         parts.Add($"Cuisine: {cuisine}.");
 
-        // Cook time — use a proportional upper bound rather than an exact target
+        // Cook time. uses a proportional upper bound rather than an exact target
         if (p.AnyCookTime)
         {
             parts.Add("Cook time: any duration.");

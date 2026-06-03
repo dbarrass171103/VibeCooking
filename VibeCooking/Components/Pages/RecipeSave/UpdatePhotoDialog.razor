@@ -1,0 +1,113 @@
+@* Dialog for updating or removing the photo on a saved recipe. *@
+
+@using Microsoft.Maui.Storage
+
+<MudDialog>
+    <DialogContent>
+
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+            Update or remove the photo for this recipe.
+        </MudText>
+
+        @if (_imageBase64 is not null)
+        {
+            <div style="position:relative; margin-bottom:12px;">
+                <img src="data:@_imageMimeType;base64,@_imageBase64"
+                     style="width:100%; max-height:220px; object-fit:cover; border-radius:8px;" />
+                <MudIconButton Icon="@Icons.Material.Filled.Close"
+                               Size="Size.Small"
+                               Color="Color.Error"
+                               Style="position:absolute; top:4px; right:4px; background:rgba(0,0,0,0.45);"
+                               OnClick="RemoveImage" />
+            </div>
+        }
+        else
+        {
+            <div style="height:120px; background:var(--mud-palette-action-disabled-background); border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:12px;">
+                <MudIcon Icon="@Icons.Material.Filled.RestaurantMenu"
+                         Style="font-size:2.5rem; opacity:0.3;" />
+            </div>
+        }
+
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.AddAPhoto"
+                   FullWidth="true"
+                   OnClick="PickImageAsync"
+                   Disabled="@_isPickingImage">
+            @(_imageBase64 is null ? "Add Photo" : "Change Photo")
+        </MudButton>
+
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Confirm">
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public string? ExistingImageBase64 { get; set; }
+    [Parameter] public string? ExistingImageMimeType { get; set; }
+
+    public record UpdatePhotoResult(string? ImageBase64, string? ImageMimeType);
+
+    private string? _imageBase64;
+    private string? _imageMimeType;
+    private bool _isPickingImage = false;
+
+    protected override void OnParametersSet()
+    {
+        _imageBase64 = ExistingImageBase64;
+        _imageMimeType = ExistingImageMimeType;
+    }
+
+    private async Task PickImageAsync()
+    {
+        _isPickingImage = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await MediaPicker.Default.PickPhotoAsync(new MediaPickerOptions
+            {
+                Title = "Choose a photo"
+            });
+
+            if (result is not null)
+            {
+                using var stream = await result.OpenReadAsync();
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+                _imageBase64 = Convert.ToBase64String(ms.ToArray());
+                _imageMimeType = result.ContentType;
+            }
+        }
+        catch
+        {
+            // Picker cancelled or unavailable, leave image unchanged.
+        }
+        finally
+        {
+            _isPickingImage = false;
+            StateHasChanged();
+        }
+    }
+
+    private void RemoveImage()
+    {
+        _imageBase64 = null;
+        _imageMimeType = null;
+    }
+
+    private void Confirm() =>
+        MudDialog.Close(DialogResult.Ok(new UpdatePhotoResult(_imageBase64, _imageMimeType)));
+
+    private void Cancel() => MudDialog.Cancel();
+}

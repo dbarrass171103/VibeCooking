@@ -1,0 +1,200 @@
+@* My Recipes page. Displays all saved recipes with search, open, and delete. *@
+
+@page "/my-recipes"
+
+@using VibeCooking.Models
+@using VibeCooking.ViewModels
+
+@inject MyRecipesViewModel ViewModel
+@inject NavigationManager Navigation
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4 mb-8">
+
+    <MudText Typo="Typo.h4" GutterBottom="false">My Recipes</MudText>
+    <MudText Class="mt-1 mb-4" Typo="Typo.body1" Color="Color.Secondary">
+        Your saved recipes.
+    </MudText>
+
+    @* Search *@
+    <MudTextField T="string"
+                  @bind-Value="ViewModel.SearchQuery"
+                  Placeholder="Search recipes..."
+                  Variant="Variant.Outlined"
+                  Adornment="Adornment.Start"
+                  AdornmentIcon="@Icons.Material.Filled.Search"
+                  Immediate="true"
+                  FullWidth="true"
+                  Class="mb-6" />
+
+    @if (ViewModel.IsLoading)
+    {
+        <div style="display:flex; justify-content:center; margin-top:48px;">
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+        </div>
+    }
+    else if (ViewModel.FilteredRecipes.Count == 0)
+    {
+        <div style="text-align:center; margin-top:48px;">
+            <MudText Typo="Typo.body1" Color="Color.Secondary">
+                @(string.IsNullOrWhiteSpace(ViewModel.SearchQuery)
+                    ? "No saved recipes yet. Generate and save a recipe to see it here."
+                    : "No recipes match your search.")
+            </MudText>
+        </div>
+    }
+    else
+    {
+        <MudGrid>
+            @foreach (var saved in ViewModel.FilteredRecipes)
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudPaper Class="pa-4" Elevation="1" Style="height:100%; display:flex; flex-direction:column;">
+
+                        @* Photo area *@
+                        <div style="position:relative; height:160px; border-radius:8px; overflow:hidden; margin-bottom:12px; background:var(--mud-palette-action-disabled-background);">
+
+                            @if (saved.ImageBase64 is not null)
+                            {
+                                <img src="data:@saved.ImageMimeType;base64,@saved.ImageBase64"
+                                     style="width:100%; height:100%; object-fit:cover;" />
+                            }
+                            else
+                            {
+                                <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
+                                    <MudIcon Icon="@Icons.Material.Filled.RestaurantMenu"
+                                             Style="font-size:2.5rem; opacity:0.3;" />
+                                </div>
+                            }
+
+                            @* Edit photo button, always visible in top-right corner *@
+                            <MudIconButton Icon="@Icons.Material.Filled.AddAPhoto"
+                                           Size="Size.Small"
+                                           Style="position:absolute; top:6px; right:6px; background:rgba(0,0,0,0.45); color:white;"
+                                           OnClick="@(() => OpenUpdatePhotoDialog(saved))" />
+
+                        </div>
+
+                        @* Title and date *@
+                        <MudText Typo="Typo.subtitle1" Style="font-weight:600;" Class="mb-1">
+                            @saved.SaveName
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+                            Saved @saved.SavedAt.ToString("d MMM yyyy")
+                        </MudText>
+
+                        @* Description *@
+                        @if (!string.IsNullOrWhiteSpace(saved.Card.Description))
+                        {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2"
+                                     Style="display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                                @saved.Card.Description
+                            </MudText>
+                        }
+
+                        @* Chips *@
+                        <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:12px; flex:1;">
+                            <MudChip T="string" Size="Size.Small" Color="Color.Primary">
+                                @saved.Card.CuisineType
+                            </MudChip>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Secondary">
+                                @saved.Card.Difficulty
+                            </MudChip>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Default">
+                                @saved.Card.MealType
+                            </MudChip>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Default">
+                                <MudIcon Icon="@Icons.Material.Filled.Timer" Size="Size.Small" Class="mr-1" />
+                                @saved.Card.CookTimeMinutes mins
+                            </MudChip>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Default">
+                                <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" Class="mr-1" />
+                                @saved.Card.Servings servings
+                            </MudChip>
+                        </div>
+
+                        @* Actions *@
+                        <div style="display:flex; gap:8px;">
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       FullWidth="true"
+                                       OnClick="@(() => OpenRecipe(saved))">
+                                Open
+                            </MudButton>
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error"
+                                           Variant="Variant.Outlined"
+                                           OnClick="@(() => ConfirmDelete(saved))" />
+                        </div>
+
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+
+</MudContainer>
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.InitAsync();
+    }
+
+    private void OpenRecipe(SavedRecipeModel saved)
+    {
+        ViewModel.OpenRecipe(saved);
+        Navigation.NavigateTo("/recipe-chat");
+    }
+
+    private async Task OpenUpdatePhotoDialog(SavedRecipeModel saved)
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("ExistingImageBase64", saved.ImageBase64);
+        parameters.Add("ExistingImageMimeType", saved.ImageMimeType);
+
+        var dialog = await DialogService.ShowAsync<UpdatePhotoDialog>(
+            "Recipe Photo",
+            parameters,
+            new DialogOptions
+            {
+                MaxWidth = MaxWidth.ExtraSmall,
+                FullWidth = true,
+                CloseOnEscapeKey = true
+            });
+
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is UpdatePhotoDialog.UpdatePhotoResult photoResult)
+        {
+            await ViewModel.UpdateRecipeImageAsync(saved.Id, photoResult.ImageBase64, photoResult.ImageMimeType);
+
+            string message = photoResult.ImageBase64 is null
+                ? "Photo removed."
+                : "Photo updated.";
+
+            Snackbar.Add(message, Severity.Success);
+        }
+    }
+
+    private async Task ConfirmDelete(SavedRecipeModel saved)
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("ContentText", $"Are you sure you want to delete \"{saved.SaveName}\"? This cannot be undone.");
+        parameters.Add("ButtonText", "Delete");
+        parameters.Add("Color", Color.Error);
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Delete Recipe", parameters,
+            new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true });
+
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await ViewModel.DeleteRecipeAsync(saved);
+            Snackbar.Add($"\"{saved.SaveName}\" deleted.", Severity.Success);
+        }
+    }
+}
