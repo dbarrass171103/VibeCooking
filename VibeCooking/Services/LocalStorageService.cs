@@ -1,4 +1,4 @@
-using MonkeyCache.FileStore;
+﻿using MonkeyCache.FileStore;
 using VibeCooking.Models;
 using VibeCooking.ViewModels;
 
@@ -9,6 +9,7 @@ public class LocalStorageService : ILocalStorageService
 {
     private const string IngredientsKey = "ingredients_selections";
     private const string CustomIngredientsKey = "ingredients_custom";
+    private const string RecipesKey = "saved_recipes";
 
     // Snapshot for persisting an ingredient's selected state and quantity.
     private record IngredientSnapshot(string Name, IngredientCategory Category, bool IsSelected, string Quantity);
@@ -89,5 +90,47 @@ public class LocalStorageService : ILocalStorageService
         }
 
         return Task.CompletedTask;
+    }
+
+    // Recipe Saving
+
+    public Task SaveRecipeAsync(SavedRecipeModel recipe)
+    {
+        var recipes = LoadRecipeList();
+
+        // Replace if already exists, otherwise add
+        int existing = recipes.FindIndex(r => r.Id == recipe.Id);
+        if (existing >= 0)
+            recipes[existing] = recipe;
+        else
+            recipes.Add(recipe);
+
+        Barrel.Current.Add(RecipesKey, recipes, TimeSpan.FromDays(365));
+        return Task.CompletedTask;
+    }
+
+    public Task<List<SavedRecipeModel>> LoadRecipesAsync()
+    {
+        var recipes = LoadRecipeList()
+            .OrderByDescending(r => r.SavedAt)
+            .ToList();
+
+        return Task.FromResult(recipes);
+    }
+
+    public Task DeleteRecipeAsync(Guid id)
+    {
+        var recipes = LoadRecipeList();
+        recipes.RemoveAll(r => r.Id == id);
+        Barrel.Current.Add(RecipesKey, recipes, TimeSpan.FromDays(365));
+        return Task.CompletedTask;
+    }
+
+    private List<SavedRecipeModel> LoadRecipeList()
+    {
+        if (Barrel.Current.IsExpired(RecipesKey))
+            return new();
+
+        return Barrel.Current.Get<List<SavedRecipeModel>>(RecipesKey) ?? new();
     }
 }

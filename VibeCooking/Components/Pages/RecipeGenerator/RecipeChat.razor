@@ -7,6 +7,7 @@
 
 @inject RecipeChatViewModel ViewModel
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @inject NavigationManager Navigation
 
 @if (!ViewModel.IsReady)
@@ -34,7 +35,17 @@ else
                 }
 
                 @* Header *@
-                <MudText Typo="Typo.h5" Class="mb-1">@r.RecipeName</MudText>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px;">
+                    <MudText Typo="Typo.h5">@r.RecipeName</MudText>
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Bookmark"
+                               Size="Size.Small"
+                               OnClick="OpenSaveDialog">
+                        Save
+                    </MudButton>
+                </div>
+
                 <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">@r.Description</MudText>
 
                 <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px;">
@@ -236,6 +247,30 @@ else
 
         if (!ViewModel.IsReady)
             Snackbar.Add("No recipe loaded. Please generate a recipe first.", Severity.Warning);
+    }
+
+    private async Task OpenSaveDialog()
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("SaveName", ViewModel.CurrentRecipe?.RecipeName ?? "");
+
+        var dialog = await DialogService.ShowAsync<SaveRecipeDialog>(
+            "Save Recipe",
+            parameters,
+            new DialogOptions
+            {
+                MaxWidth = MaxWidth.ExtraSmall,
+                FullWidth = true,
+                CloseOnEscapeKey = true
+            });
+
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is string saveName && !string.IsNullOrWhiteSpace(saveName))
+        {
+            await ViewModel.SaveRecipeAsync(saveName);
+            Snackbar.Add($"\"{saveName}\" saved to My Recipes.", Severity.Success);
+        }
     }
 
     private async Task SendMessage()

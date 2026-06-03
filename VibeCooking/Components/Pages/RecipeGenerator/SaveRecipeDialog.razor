@@ -1,0 +1,70 @@
+@* Dialog for naming and saving a recipe *@
+<MudDialog>
+    <DialogContent>
+
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+            Give this recipe a name to save it to My Recipes.
+        </MudText>
+
+        <MudTextField T="string"
+                      @ref="_nameField"
+                      @bind-Value="SaveName"
+                      @bind-Value:after="() => _showError = false"
+                      Label="Recipe Name"
+                      Variant="Variant.Outlined"
+                      Immediate="true"
+                      FullWidth="true"
+                      Error="@_showError"
+                      ErrorText="Please enter a name"
+                      OnKeyUp="HandleKeyUp" />
+
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save">
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public string SaveName { get; set; } = "";
+
+    private MudTextField<string>? _nameField;
+    private bool _showError = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _nameField is not null)
+        {
+            await Task.Delay(150);
+            await _nameField.FocusAsync();
+        }
+    }
+
+    private void Save()
+    {
+        if (string.IsNullOrWhiteSpace(SaveName))
+        {
+            _showError = true;
+            StateHasChanged();
+            return;
+        }
+
+        MudDialog.Close(DialogResult.Ok(SaveName.Trim()));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void HandleKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            Save();
+    }
+}

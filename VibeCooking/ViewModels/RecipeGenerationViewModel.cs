@@ -15,12 +15,12 @@ public class RecipeGenerationViewModel : BaseViewModel
         ["Any", "Easy", "Medium", "Hard"];
 
     public List<string> CuisineTypes { get; } =
-    [
+    [   
         "Any", "American", "Argentinian", "Australian", "Brazilian", "British",
         "Caribbean", "Chinese", "Danish", "Emirati", "Filipino", "Finnish",
         "French", "German", "Greek", "Hong Kong", "Indian", "Indonesian",
         "Italian", "Japanese", "Korean", "Lebanese", "Malaysian", "Mexican",
-        "Moroccan", "Norwegian", "Peruvian", "Saudi Arabian", "Singaporean",
+        "Moroccan", "Norwegian", "Pakistani", "Peruvian", "Saudi Arabian", "Singaporean",
         "Spanish", "Swedish", "Taiwanese", "Thai", "Turkish", "Vietnamese"
     ];
 

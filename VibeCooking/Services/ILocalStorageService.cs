@@ -6,15 +6,19 @@ namespace VibeCooking.Services;
 // Defines local persistence operations for the app.
 public interface ILocalStorageService
 {
-    /// <summary>
-    /// Persists the selected state and quantities of all ingredients
-    /// (catalog + custom) from the given ViewModel to local storage.
-    /// </summary>
+    // Persists the selected state and quantities of all ingredients (catalog + custom) from the given ViewModel to local storage.
     Task SaveIngredientsAsync(IngredientsViewModel viewModel);
 
-    /// <summary>
-    /// Restores ingredient selections and custom ingredients from local
-    /// storage into the given ViewModel. No-ops if nothing has been saved yet.
-    /// </summary>
+
+    // Restores ingredient selections and custom ingredients from local storage into the given ViewModel. No-ops if nothing has been saved yet.
     Task LoadIngredientsAsync(IngredientsViewModel viewModel);
+
+    // Saves a recipe. If a recipe with the same Id already exists it is overwritten.
+    Task SaveRecipeAsync(SavedRecipeModel recipe);
+
+    // Loadsall saved recipes, ordered by most recently saved first.
+    Task<List<SavedRecipeModel>> LoadRecipesAsync();
+
+    // Deletes a saved recipe by Id.
+    Task DeleteRecipeAsync(Guid id);
 }

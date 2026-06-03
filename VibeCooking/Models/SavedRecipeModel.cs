@@ -1,10 +1,11 @@
 ﻿namespace VibeCooking.Models;
 
-// Represents a recipe the user has saved. Wraps a RecipeCardModel but with data like image, liked status and saved date
+// Represents a recipe the user has saved. Stores the full recipe for editing and the card for summary display.
 public class SavedRecipeModel
 {
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string SaveName { get; set; } = string.Empty;
+    public RecipeOutputModel Recipe { get; set; } = new();
     public RecipeCardModel Card { get; set; } = new();
-    public string ImageBase64 { get; set; } = string.Empty;
-    public bool IsLiked { get; set; } = false;
     public DateTime SavedAt { get; set; } = DateTime.Now;
 }
