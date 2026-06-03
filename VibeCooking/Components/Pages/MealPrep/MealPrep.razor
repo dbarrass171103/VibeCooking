@@ -1,0 +1,33 @@
+﻿@page "/meal-prep"
+@inject MealPrepViewModel viewModel
+
+<MudContainer MaxWidth="MaxWidth.False" Class="pa-2">
+    <MudText GutterBottom="false" Class="ma-3" Typo="Typo.h4">Meal Planner</MudText>
+
+    <MudTotalCalendar T="CalendarItem" Values="@vm.CalendarTotalItems" Items="@vm.CalendarItems" ShowDayTotal="false" CellClicked="OnDayClicked">
+        <CellTemplate>
+            <MudPaper Class="calendar-cell" Elevation="0">
+                <div class="calendar-text">
+                    @context.Text
+                </div>
+            </MudPaper>
+        </CellTemplate>
+    </MudTotalCalendar>
+</MudContainer>
+
+@code
+{
+    private MealPrepViewModel vm;
+
+    protected override async Task OnInitializedAsync()
+    {
+        vm = viewModel;
+
+        await vm.InitAsync();
+    }
+
+    private void OnDayClicked(DateTime date)
+    {
+        
+    }
+}
