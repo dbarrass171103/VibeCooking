@@ -50,6 +50,7 @@ public class RecipeChatViewModel : BaseViewModel
     }
 
     // Loads a specific saved recipe. Sets the flag to prevent InitAsync from overwriting it when the page navigates.
+
     public void LoadRecipe(RecipeOutputModel recipe)
     {
         _loadedFromSaved = true;
@@ -72,6 +73,8 @@ public class RecipeChatViewModel : BaseViewModel
 
         // Add user message to history
         Messages.Add(new ChatMessageModel { Role = "user", Content = userMessage.Trim() });
+        var userEntry = new ChatMessageModel { Role = "user", Content = userMessage.Trim() };
+        Messages.Add(userEntry);
 
         var (success, error, response) = await _apiService.SendChatMessageAsync(
             Messages,
@@ -90,7 +93,6 @@ public class RecipeChatViewModel : BaseViewModel
 
         // Add assistant reply to history
         Messages.Add(new ChatMessageModel { Role = "assistant", Content = response.Reply });
-        // Update the live recipe
         CurrentRecipe = response.Recipe;
     }
 
@@ -99,12 +101,11 @@ public class RecipeChatViewModel : BaseViewModel
     /// Always builds the summary card from CurrentRecipe so cook time,
     /// servings, and all other fields reflect any chat edits.
     /// </summary>
-    public async Task SaveRecipeAsync(string saveName)
+    public async Task SaveRecipeAsync(string saveName, string? imageBase64 = null, string? imageMimeType = null)
     {
         if (CurrentRecipe is null)
             return;
 
-        // Rebuild RecipeCardModel using the full recipes information
         var card = new RecipeCardModel
         {
             RecipeName = CurrentRecipe.RecipeName,
@@ -123,7 +124,9 @@ public class RecipeChatViewModel : BaseViewModel
             SaveName = saveName,
             Recipe = CurrentRecipe,
             Card = card,
-            SavedAt = DateTime.Now
+            SavedAt = DateTime.Now,
+            ImageBase64 = imageBase64,
+            ImageMimeType = imageMimeType
         };
 
         await _storage.SaveRecipeAsync(saved);

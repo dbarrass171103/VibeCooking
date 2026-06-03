@@ -1,4 +1,4 @@
-@* Dialog for naming and saving a recipe *@
+@* Dialog for updating or removing the photo on a saved recipe. *@
 
 @using Microsoft.Maui.Storage
 
@@ -6,35 +6,26 @@
     <DialogContent>
 
         <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
-            Give this recipe a name to save it to My Recipes.
+            Update or remove the photo for this recipe.
         </MudText>
-
-        <MudTextField T="string"
-                      @ref="_nameField"
-                      @bind-Value="SaveName"
-                      @bind-Value:after="() => _showError = false"
-                      Label="Recipe Name"
-                      Variant="Variant.Outlined"
-                      Immediate="true"
-                      FullWidth="true"
-                      Error="@_showError"
-                      ErrorText="Please enter a name"
-                      OnKeyUp="HandleKeyUp"
-                      Class="mb-4" />
-
-        @* Optional photo *@
-        <MudText Typo="Typo.subtitle2" Class="mb-2">Photo (optional)</MudText>
 
         @if (_imageBase64 is not null)
         {
-            <div style="position:relative; margin-bottom:8px;">
+            <div style="position:relative; margin-bottom:12px;">
                 <img src="data:@_imageMimeType;base64,@_imageBase64"
-                     style="width:100%; max-height:200px; object-fit:cover; border-radius:8px;" />
+                     style="width:100%; max-height:220px; object-fit:cover; border-radius:8px;" />
                 <MudIconButton Icon="@Icons.Material.Filled.Close"
                                Size="Size.Small"
                                Color="Color.Error"
                                Style="position:absolute; top:4px; right:4px; background:rgba(0,0,0,0.45);"
                                OnClick="RemoveImage" />
+            </div>
+        }
+        else
+        {
+            <div style="height:120px; background:var(--mud-palette-action-disabled-background); border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:12px;">
+                <MudIcon Icon="@Icons.Material.Filled.RestaurantMenu"
+                         Style="font-size:2.5rem; opacity:0.3;" />
             </div>
         }
 
@@ -51,7 +42,7 @@
 
     <DialogActions>
         <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Confirm">
             Save
         </MudButton>
     </DialogActions>
@@ -62,23 +53,19 @@
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = default!;
 
-    [Parameter]
-    public string SaveName { get; set; } = "";
+    [Parameter] public string? ExistingImageBase64 { get; set; }
+    [Parameter] public string? ExistingImageMimeType { get; set; }
 
-    public record SaveRecipeResult(string SaveName, string? ImageBase64, string? ImageMimeType);
-    private MudTextField<string>? _nameField;
-    private bool _showError = false;
-    private bool _isPickingImage = false;
+    public record UpdatePhotoResult(string? ImageBase64, string? ImageMimeType);
+
     private string? _imageBase64;
     private string? _imageMimeType;
+    private bool _isPickingImage = false;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override void OnParametersSet()
     {
-        if (firstRender && _nameField is not null)
-        {
-            await Task.Delay(150);
-            await _nameField.FocusAsync();
-        }
+        _imageBase64 = ExistingImageBase64;
+        _imageMimeType = ExistingImageMimeType;
     }
 
     private async Task PickImageAsync()
@@ -104,7 +91,7 @@
         }
         catch
         {
-            // Picker cancelled or unavailable, leave unchanged
+            // Picker cancelled or unavailable, leave image unchanged.
         }
         finally
         {
@@ -119,24 +106,8 @@
         _imageMimeType = null;
     }
 
-    private void Save()
-    {
-        if (string.IsNullOrWhiteSpace(SaveName))
-        {
-            _showError = true;
-            StateHasChanged();
-            return;
-        }
-
-        MudDialog.Close(DialogResult.Ok(
-            new SaveRecipeResult(SaveName.Trim(), _imageBase64, _imageMimeType)));
-    }
+    private void Confirm() =>
+        MudDialog.Close(DialogResult.Ok(new UpdatePhotoResult(_imageBase64, _imageMimeType)));
 
     private void Cancel() => MudDialog.Cancel();
-
-    private void HandleKeyUp(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-            Save();
-    }
 }

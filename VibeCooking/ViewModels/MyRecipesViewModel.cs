@@ -66,4 +66,18 @@ public class MyRecipesViewModel : BaseViewModel
     {
         _recipeChatViewModel.LoadRecipe(recipe.Recipe);
     }
+
+    // Updates the photo on an existing saved recipe.
+    public async Task UpdateRecipeImageAsync(Guid id, string? imageBase64, string? imageMimeType)
+    {
+        var recipe = Recipes.FirstOrDefault(r => r.Id == id);
+        if (recipe is null)
+            return;
+
+        recipe.ImageBase64 = imageBase64;
+        recipe.ImageMimeType = imageMimeType;
+
+        await _storage.SaveRecipeAsync(recipe);
+        await RefreshAsync();
+    }
 }

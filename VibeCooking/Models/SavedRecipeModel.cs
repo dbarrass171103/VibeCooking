@@ -8,4 +8,6 @@ public class SavedRecipeModel
     public RecipeOutputModel Recipe { get; set; } = new();
     public RecipeCardModel Card { get; set; } = new();
     public DateTime SavedAt { get; set; } = DateTime.Now;
+    public string? ImageBase64 { get; set; }
+    public string? ImageMimeType { get; set; }
 }

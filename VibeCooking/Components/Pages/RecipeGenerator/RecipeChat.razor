@@ -266,10 +266,10 @@ else
 
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is string saveName && !string.IsNullOrWhiteSpace(saveName))
+        if (!result.Canceled && result.Data is SaveRecipeDialog.SaveRecipeResult saveResult)
         {
-            await ViewModel.SaveRecipeAsync(saveName);
-            Snackbar.Add($"\"{saveName}\" saved to My Recipes.", Severity.Success);
+            await ViewModel.SaveRecipeAsync(saveResult.SaveName, saveResult.ImageBase64, saveResult.ImageMimeType);
+            Snackbar.Add($"\"{saveResult.SaveName}\" saved to My Recipes.", Severity.Success);
         }
     }
 

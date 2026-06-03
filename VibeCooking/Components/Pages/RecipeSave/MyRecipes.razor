@@ -52,10 +52,28 @@
                 <MudItem xs="12" sm="6" md="4">
                     <MudPaper Class="pa-4" Elevation="1" Style="height:100%; display:flex; flex-direction:column;">
 
-                        @* Thumbnail placeholder *@
-                        <div style="height:120px; background:var(--mud-palette-action-disabled-background); border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:12px;">
-                            <MudIcon Icon="@Icons.Material.Filled.RestaurantMenu"
-                                     Style="font-size:2.5rem; opacity:0.3;" />
+                        @* Photo area *@
+                        <div style="position:relative; height:160px; border-radius:8px; overflow:hidden; margin-bottom:12px; background:var(--mud-palette-action-disabled-background);">
+
+                            @if (saved.ImageBase64 is not null)
+                            {
+                                <img src="data:@saved.ImageMimeType;base64,@saved.ImageBase64"
+                                     style="width:100%; height:100%; object-fit:cover;" />
+                            }
+                            else
+                            {
+                                <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
+                                    <MudIcon Icon="@Icons.Material.Filled.RestaurantMenu"
+                                             Style="font-size:2.5rem; opacity:0.3;" />
+                                </div>
+                            }
+
+                            @* Edit photo button, always visible in top-right corner *@
+                            <MudIconButton Icon="@Icons.Material.Filled.AddAPhoto"
+                                           Size="Size.Small"
+                                           Style="position:absolute; top:6px; right:6px; background:rgba(0,0,0,0.45); color:white;"
+                                           OnClick="@(() => OpenUpdatePhotoDialog(saved))" />
+
                         </div>
 
                         @* Title and date *@
@@ -129,6 +147,36 @@
     {
         ViewModel.OpenRecipe(saved);
         Navigation.NavigateTo("/recipe-chat");
+    }
+
+    private async Task OpenUpdatePhotoDialog(SavedRecipeModel saved)
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("ExistingImageBase64", saved.ImageBase64);
+        parameters.Add("ExistingImageMimeType", saved.ImageMimeType);
+
+        var dialog = await DialogService.ShowAsync<UpdatePhotoDialog>(
+            "Recipe Photo",
+            parameters,
+            new DialogOptions
+            {
+                MaxWidth = MaxWidth.ExtraSmall,
+                FullWidth = true,
+                CloseOnEscapeKey = true
+            });
+
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is UpdatePhotoDialog.UpdatePhotoResult photoResult)
+        {
+            await ViewModel.UpdateRecipeImageAsync(saved.Id, photoResult.ImageBase64, photoResult.ImageMimeType);
+
+            string message = photoResult.ImageBase64 is null
+                ? "Photo removed."
+                : "Photo updated.";
+
+            Snackbar.Add(message, Severity.Success);
+        }
     }
 
     private async Task ConfirmDelete(SavedRecipeModel saved)
