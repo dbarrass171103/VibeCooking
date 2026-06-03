@@ -15,7 +15,7 @@ public class RecipeGenerationViewModel : BaseViewModel
         ["Any", "Easy", "Medium", "Hard"];
 
     public List<string> CuisineTypes { get; } =
-    [   
+    [
         "Any", "American", "Argentinian", "Australian", "Brazilian", "British",
         "Caribbean", "Chinese", "Danish", "Emirati", "Filipino", "Finnish",
         "French", "German", "Greek", "Hong Kong", "Indian", "Indonesian",
@@ -52,7 +52,7 @@ public class RecipeGenerationViewModel : BaseViewModel
     public override Task InitAsync() => Task.CompletedTask;
 
     /// <summary>
-    /// Generates 5 recipe cards. Pulls the current ingredient selection from
+    /// Generates recipe cards. Pulls the current ingredient selection from
     /// IngredientsViewModel and merges preset and custom allergens into the parameter list.
     /// </summary>
     public async Task GenerateCardsAsync()
@@ -61,6 +61,7 @@ public class RecipeGenerationViewModel : BaseViewModel
         IsGeneratingCards = true;
         SelectedCard = null;
         GeneratedRecipe = null;
+        RecipeCards = new();
 
         Parameters.Ingredients = _ingredientsViewModel.GetSelectedIngredients();
         Parameters.Allergies = GetAllAllergens();

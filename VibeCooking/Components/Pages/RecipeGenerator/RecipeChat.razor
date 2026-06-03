@@ -9,6 +9,7 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 
 @if (!ViewModel.IsReady)
 {
@@ -106,13 +107,12 @@ else
                 @* Instructions *@
                 <MudText Typo="Typo.h6" Class="mb-2">Instructions</MudText>
                 <MudPaper Class="pa-4 mb-4" Elevation="1">
-                    @{ int stepNumber = 1; }
-                    @foreach (var instruction in r.Instructions)
+                    @foreach (var (instruction, index) in r.Instructions.Select((item, i) => (item, i)))
                     {
                         <div style="display:flex; gap:12px; margin-bottom:12px;">
                             <MudText Typo="Typo.subtitle2"
                                      Style="min-width:28px; color:var(--mud-palette-primary);">
-                                @(stepNumber++).
+                                @(index + 1).
                             </MudText>
                             <MudText Typo="Typo.body2">@instruction</MudText>
                         </div>
@@ -285,6 +285,9 @@ else
 
         if (ViewModel.ErrorMessage is not null)
             Snackbar.Add(ViewModel.ErrorMessage, Severity.Error);
+
+        // Scroll the chat container to the bottom after the new message renders.
+        await JS.InvokeVoidAsync("scrollToBottom", "chat-scroll");
 
         StateHasChanged();
     }

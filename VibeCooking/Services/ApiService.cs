@@ -51,10 +51,19 @@ public class ApiService : IApiService
             );
 
             string rawJson = CleanJson(completion.Content[0].Text);
-            List<RecipeCardModel>? cards = JsonSerializer.Deserialize<List<RecipeCardModel>>(rawJson, JsonOptions);
+
+            List<RecipeCardModel>? cards;
+            try
+            {
+                cards = JsonSerializer.Deserialize<List<RecipeCardModel>>(rawJson, JsonOptions);
+            }
+            catch (JsonException)
+            {
+                return (false, "The AI returned an unexpected format. Please try again.", new());
+            }
 
             if (cards is null || cards.Count == 0)
-                return (false, "Failed to deserialise recipe cards.", new());
+                return (false, "No recipe cards were returned. Please try again.", new());
 
             return (true, string.Empty, cards);
         }
@@ -78,10 +87,19 @@ public class ApiService : IApiService
             );
 
             string rawJson = CleanJson(completion.Content[0].Text);
-            RecipeOutputModel? output = JsonSerializer.Deserialize<RecipeOutputModel>(rawJson, JsonOptions);
+
+            RecipeOutputModel? output;
+            try
+            {
+                output = JsonSerializer.Deserialize<RecipeOutputModel>(rawJson, JsonOptions);
+            }
+            catch (JsonException)
+            {
+                return (false, "The AI returned an unexpected format. Please try again.", null);
+            }
 
             if (output is null)
-                return (false, "Failed to deserialise the full recipe.", null);
+                return (false, "No recipe was returned. Please try again.", null);
 
             return (true, string.Empty, output);
         }
@@ -111,15 +129,23 @@ public class ApiService : IApiService
                 else
                     messages.Add(new AssistantChatMessage(msg.Content));
             }
-            messages.Add(new UserChatMessage(userMessage));
 
             ChatCompletion completion = await _chatClient.CompleteChatAsync(messages);
 
             string rawJson = CleanJson(completion.Content[0].Text);
-            ChatResponseModel? response = JsonSerializer.Deserialize<ChatResponseModel>(rawJson, JsonOptions);
+
+            ChatResponseModel? response;
+            try
+            {
+                response = JsonSerializer.Deserialize<ChatResponseModel>(rawJson, JsonOptions);
+            }
+            catch (JsonException)
+            {
+                return (false, "The AI returned an unexpected format. Please try again.", null);
+            }
 
             if (response is null)
-                return (false, "Failed to deserialise chat response.", null);
+                return (false, "No response was returned. Please try again.", null);
 
             return (true, string.Empty, response);
         }

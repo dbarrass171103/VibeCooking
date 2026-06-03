@@ -41,7 +41,7 @@ public class RecipeChatViewModel : BaseViewModel
             _loadedFromSaved = false;
             return Task.CompletedTask;
         }
-            
+
 
         CurrentRecipe = _recipeGenerationViewModel.GeneratedRecipe;
         Messages.Clear();
