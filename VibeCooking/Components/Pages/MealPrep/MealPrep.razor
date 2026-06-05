@@ -6,7 +6,7 @@
 <MudContainer MaxWidth="MaxWidth.False" Class="pa-2">
     <MudText GutterBottom="false" Class="ma-3" Typo="Typo.h4">Meal Planner</MudText>
 
-    <MudTotalCalendar T="CalendarItem" Values="@vm.CalendarTotalItems" Items="@vm.CalendarItems" ShowDayTotal="false" CellClicked="@(async (date)=> await OnDayClicked(date))">
+    <MudCalendar T="CalendarItem" Items="@vm.CalendarItems" CellClicked="@(async (date)=> await OnDayClicked(date))">
         <CellTemplate>
             <MudPaper Class="calendar-cell" Elevation="0">
                 <div class="calendar-text">
@@ -14,7 +14,7 @@
                 </div>
             </MudPaper>
         </CellTemplate>
-    </MudTotalCalendar>
+    </MudCalendar>
 </MudContainer>
 
 @code
