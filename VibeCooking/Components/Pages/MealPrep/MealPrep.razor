@@ -1,0 +1,55 @@
+﻿@page "/meal-prep"
+@inject MealPrepViewModel viewModel
+@inject IDialogService dialogService
+@inject ISnackbar snackbarService
+
+<MudContainer MaxWidth="MaxWidth.False" Class="pa-2">
+    <MudText GutterBottom="false" Class="ma-3" Typo="Typo.h4">Meal Planner</MudText>
+
+    <MudTotalCalendar T="CalendarItem" Values="@vm.CalendarTotalItems" Items="@vm.CalendarItems" ShowDayTotal="false" CellClicked="@(async (date)=> await OnDayClicked(date))">
+        <CellTemplate>
+            <MudPaper Class="calendar-cell" Elevation="0">
+                <div class="calendar-text">
+                    @context.Text
+                </div>
+            </MudPaper>
+        </CellTemplate>
+    </MudTotalCalendar>
+</MudContainer>
+
+@code
+{
+    private MealPrepViewModel vm;
+
+    protected override async Task OnInitializedAsync()
+    {
+        vm = viewModel;
+
+        await vm.InitAsync();
+    }
+
+    private async Task OnDayClicked(DateTime date)
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var parameters = new DialogParameters<RecipeSelectDialog>()
+        {
+            { x => x.SavedRecipes, vm.SavedRecipes }
+        };
+
+        var dialog = await dialogService.ShowAsync<RecipeSelectDialog>("Select Recipe", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            string recipeId = (string)result.Data;
+
+            if (string.IsNullOrEmpty(recipeId))
+            {
+                snackbarService.Add("Failed to select recipe", Severity.Error);
+                return;
+            }
+
+            await vm.MapDateToRecipeAsync(date, recipeId);
+        }
+    }
+}

@@ -84,3 +84,31 @@ h1:focus {
         padding-left: env(safe-area-inset-left);
     }
 }
+
+.calendar-cell {
+    cursor: pointer;
+    border: 1px solid var(--mud-palette-tertiary-darken);
+    background-color: var(--mud-palette-tertiary-hover);
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.calendar-text {
+    text-align: center;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+    .calendar-cell {
+        min-height: 32px;
+        padding: 2px !important;
+    }
+
+    .calendar-text {
+        font-size: 0.7rem;
+    }
+}

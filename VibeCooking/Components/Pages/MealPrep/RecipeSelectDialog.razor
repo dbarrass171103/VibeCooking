@@ -1,0 +1,59 @@
+﻿<MudDialog>
+    <TitleContent>@MudDialog.Title</TitleContent>
+
+    <DialogContent>
+        @if (SavedRecipes?.Count > 0)
+        {
+            @foreach (SavedRecipeModel recipe in SavedRecipes)
+            {
+                string recipeId = recipe.Id.ToString();
+                int elevation = 2;
+                string style = "background: white;";
+
+                if (recipeId == SelectedRecipe)
+                {
+                    elevation = 5;
+                    style = "background: #ededed";
+                }
+
+                <MudPaper @onclick="@(()=> SelectRecipe(recipeId))" Style="@style" Class="pa-3" Elevation="@elevation">@recipe.SaveName</MudPaper>
+            }
+        }
+        else
+        {
+            <MudText Color="Color.Secondary" Typo="Typo.body1">No saved recipes. Generate recipes first to add them to your calendar</MudText>
+        }
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+
+        @if (!string.IsNullOrEmpty(SelectedRecipe))
+        {
+            <MudButton OnClick="Submit">Confirm</MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code 
+{
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public List<SavedRecipeModel> SavedRecipes { get; set; } = new();
+
+    private string SelectedRecipe { get; set; } = string.Empty;
+
+    private void Submit()
+    {
+        MudDialog.Close(DialogResult.Ok(SelectedRecipe));
+    }
+
+    private void SelectRecipe(string recipeId)
+    {
+        SelectedRecipe = recipeId;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

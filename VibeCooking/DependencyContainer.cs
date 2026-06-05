@@ -15,6 +15,7 @@ public static class DependencyContainer
         services.AddSingleton<RecipeGenerationViewModel>();
         services.AddSingleton<RecipeChatViewModel>();
         services.AddTransient<MyRecipesViewModel>();
+        services.AddTransient<MealPrepViewModel>();
 
         // Services
         services.AddTransient<IApiService, ApiService>();
