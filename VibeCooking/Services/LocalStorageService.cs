@@ -10,6 +10,7 @@ public class LocalStorageService : ILocalStorageService
     private const string IngredientsKey = "ingredients_selections";
     private const string CustomIngredientsKey = "ingredients_custom";
     private const string RecipesKey = "saved_recipes";
+    private const string CalendarRecipesKey = "calendar_recipes";
 
     // Snapshot for persisting an ingredient's selected state and quantity.
     private record IngredientSnapshot(string Name, IngredientCategory Category, bool IsSelected, string Quantity);
@@ -127,7 +128,74 @@ public class LocalStorageService : ILocalStorageService
         return Task.CompletedTask;
     }
 
-    public Task<List<SavedRecipeModel>> LoadRecipesAsync()
+    public async Task SaveCalendarRecipeAsync(KeyValuePair<DateTime, string> calendarRecipe)
+    {
+        //We need to load the current saved recipes, delete the entry, and rewrite all as a day might have had a change of recipe.
+        try
+        {
+            var currentCalendarRecipes = await LoadCalendarRecipesAsync();
+
+            if (currentCalendarRecipes.ContainsKey(calendarRecipe.Key))
+            {
+                currentCalendarRecipes[calendarRecipe.Key].Add(calendarRecipe.Value);
+            }
+            else
+            {
+                currentCalendarRecipes[calendarRecipe.Key] = [calendarRecipe.Value];
+			}
+
+            Barrel.Current.Add(CalendarRecipesKey, currentCalendarRecipes, TimeSpan.FromDays(365));
+        }
+        catch (Exception ex)
+        {
+			Console.WriteLine($"[LocalStorageService] Failed to save calendar recipe: {ex.Message}");
+		}
+	}
+
+    public async Task<Dictionary<DateTime, List<string>>> LoadCalendarRecipesAsync(DateTime startDate, DateTime endDate)
+    {
+		try
+		{
+            if (Barrel.Current.IsExpired(CalendarRecipesKey))
+            {
+                return new();
+            }
+            else
+            {
+                var calendarRecipes = Barrel.Current.Get<Dictionary<DateTime, List<string>>>(CalendarRecipesKey);
+
+                return calendarRecipes.Where(x => x.Key.Date >= startDate.Date && x.Key.Date <= endDate.Date).ToDictionary();
+            }
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"[LocalStorageService] Failed to load recipes: {ex.Message}");
+            return new();
+		}
+	}
+
+	public async Task<Dictionary<DateTime, List<string>>> LoadCalendarRecipesAsync()
+	{
+		try
+		{
+			if (Barrel.Current.IsExpired(CalendarRecipesKey))
+			{
+				return new();
+			}
+			else
+			{
+				var calendarRecipes = Barrel.Current.Get<Dictionary<DateTime, List<string>>>(CalendarRecipesKey);
+                return calendarRecipes;
+			}
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"[LocalStorageService] Failed to load recipes: {ex.Message}");
+			return new();
+		}
+	}
+
+	public Task<List<SavedRecipeModel>> LoadRecipesAsync()
     {
         try
         {

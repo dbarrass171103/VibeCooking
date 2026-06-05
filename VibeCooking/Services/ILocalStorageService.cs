@@ -21,4 +21,9 @@ public interface ILocalStorageService
 
     // Deletes a saved recipe by Id.
     Task DeleteRecipeAsync(Guid id);
+
+    public Task<Dictionary<DateTime, List<string>>> LoadCalendarRecipesAsync(DateTime startDate, DateTime endDate);
+    public Task<Dictionary<DateTime, List<string>>> LoadCalendarRecipesAsync();
+
+	public Task SaveCalendarRecipeAsync(KeyValuePair<DateTime, string> calendarRecipe);
 }
