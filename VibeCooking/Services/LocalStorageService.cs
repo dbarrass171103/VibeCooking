@@ -195,6 +195,27 @@ public class LocalStorageService : ILocalStorageService
 		}
 	}
 
+	public async Task RemoveCalendarRecipeAsync(DateTime date, string recipeId)
+	{
+		try
+		{
+			var current = await LoadCalendarRecipesAsync();
+
+			if (current.TryGetValue(date, out var ids))
+			{
+				ids.Remove(recipeId);
+				if (ids.Count == 0)
+					current.Remove(date);
+			}
+
+			Barrel.Current.Add(CalendarRecipesKey, current, TimeSpan.FromDays(365));
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"[LocalStorageService] Failed to remove calendar recipe: {ex.Message}");
+		}
+	}
+
 	public Task<List<SavedRecipeModel>> LoadRecipesAsync()
     {
         try

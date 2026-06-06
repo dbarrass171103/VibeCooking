@@ -1,31 +1,151 @@
-﻿@page "/meal-prep"
+@page "/meal-prep"
 @inject MealPrepViewModel viewModel
 @inject IDialogService dialogService
 @inject ISnackbar snackbarService
 
 <MudContainer MaxWidth="MaxWidth.False" Class="pa-2">
-    <MudText GutterBottom="false" Class="ma-3" Typo="Typo.h4">Meal Planner</MudText>
 
-    <MudCalendar T="CalendarItem" Items="@vm.CalendarItems" CellClicked="@(async (date)=> await OnDayClicked(date))">
-        <CellTemplate>
-            <MudPaper Class="calendar-cell" Elevation="0">
-                <div class="calendar-text">
-                    @context.Text
-                </div>
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2 mx-1">
+        <MudText Typo="Typo.h5">Meal Planner</MudText>
+        <MudIconButton Icon="@Icons.Material.Filled.ShoppingCart"
+                       Color="Color.Primary"
+                       Variant="Variant.Filled"
+                       Size="Size.Medium"
+                       OnClick="@(() => ingredientsOpen = true)"
+                       aria-label="View weekly ingredients" />
+    </MudStack>
+
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3 mx-1">
+        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
+                       OnClick="@PreviousWeek"
+                       aria-label="Previous week" />
+
+        <MudText Typo="Typo.subtitle1">
+            @vm.CurrentWeekStart.ToString("MMM d") – @vm.CurrentWeekEnd.AddDays(-1).ToString("MMM d, yyyy")
+        </MudText>
+
+        <MudIconButton Icon="@Icons.Material.Filled.ChevronRight"
+                       OnClick="@NextWeek"
+                       aria-label="Next week" />
+    </MudStack>
+
+    <MudStack Spacing="2">
+        @foreach (var day in vm.WeekDays)
+        {
+            bool isToday = day.Date.Date == DateTime.Today;
+
+            <MudPaper Class="@($"pa-3 {(isToday ? "today-highlight" : "")}")" Elevation="2">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <div>
+                        <MudText Typo="Typo.subtitle1" Style="@(isToday ? "font-weight:700;" : "")">
+                            @day.Date.ToString("dddd")
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            @day.Date.ToString("MMMM d")
+                        </MudText>
+                    </div>
+
+                    <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
+                                   Color="Color.Primary"
+                                   Size="Size.Medium"
+                                   OnClick="@(async () => await OnDayClicked(day.Date))"
+                                   aria-label="Add meal" />
+                </MudStack>
+
+                @if (day.Meals.Any())
+                {
+                    <MudDivider Class="my-2" />
+                    <MudStack Spacing="1">
+                        @foreach (var meal in day.Meals)
+                        {
+                            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small"
+                                     OnClose="@(async () => await RemoveMeal(day.Date, meal.RecipeId))">
+                                @meal.Name
+                            </MudChip>
+                        }
+                    </MudStack>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Tertiary" Class="mt-1">No meals planned</MudText>
+                }
             </MudPaper>
-        </CellTemplate>
-    </MudCalendar>
+        }
+    </MudStack>
+
 </MudContainer>
+
+<MudDrawer @bind-Open="ingredientsOpen" Anchor="Anchor.Bottom" Variant="DrawerVariant.Temporary"
+           ClipMode="DrawerClipMode.Never" Height="60vh">
+    <MudDrawerHeader>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Style="width:100%">
+            <MudText Typo="Typo.h6">Weekly Ingredients</MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.Close"
+                           OnClick="@(() => ingredientsOpen = false)" />
+        </MudStack>
+    </MudDrawerHeader>
+
+    <MudList T="string" Dense="true" Class="px-2">
+        @if (vm.WeekIngredients.Any())
+        {
+            @foreach (var group in vm.WeekIngredients.GroupBy(x => x.Name.ToLower()).OrderBy(g => g.Key))
+            {
+                string name = group.First().Name;
+                string quantities = string.Join(" + ", group.Select(x => x.Quantity).Where(q => !string.IsNullOrWhiteSpace(q)));
+
+                <MudListItem T="string" Icon="@Icons.Material.Filled.FiberManualRecord" IconSize="Size.Small">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Style="width:100%">
+                        <MudText Typo="Typo.body2">@name</MudText>
+                        @if (!string.IsNullOrWhiteSpace(quantities))
+                        {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">@quantities</MudText>
+                        }
+                    </MudStack>
+                </MudListItem>
+            }
+        }
+        else
+        {
+            <MudListItem T="string">
+                <MudText Color="Color.Secondary">No meals planned this week</MudText>
+            </MudListItem>
+        }
+    </MudList>
+</MudDrawer>
+
+<style>
+    .today-highlight {
+        border-left: 4px solid var(--mud-palette-primary);
+    }
+</style>
 
 @code
 {
     private MealPrepViewModel vm;
+    private bool ingredientsOpen = false;
 
     protected override async Task OnInitializedAsync()
     {
         vm = viewModel;
-
         await vm.InitAsync();
+    }
+
+    private async Task PreviousWeek()
+    {
+        await vm.GoToPreviousWeekAsync();
+        StateHasChanged();
+    }
+
+    private async Task NextWeek()
+    {
+        await vm.GoToNextWeekAsync();
+        StateHasChanged();
+    }
+
+    private async Task RemoveMeal(DateTime date, string recipeId)
+    {
+        await vm.RemoveMealAsync(date, recipeId);
+        StateHasChanged();
     }
 
     private async Task OnDayClicked(DateTime date)
@@ -50,6 +170,7 @@
             }
 
             await vm.MapDateToRecipeAsync(date, recipeId);
+            StateHasChanged();
         }
     }
 }
