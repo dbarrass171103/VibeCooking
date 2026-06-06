@@ -185,7 +185,7 @@
             {
                 <MudButton Size="Size.Small"
                            Variant="@(ViewModel.IsAllergenSelected(allergen) ? Variant.Filled : Variant.Outlined)"
-                           Color="Color.Error"
+                           Color="Color.Primary"
                            OnClick="@(() => ViewModel.TogglePresetAllergen(allergen))">
                     @allergen
                 </MudButton>
@@ -206,7 +206,7 @@
                           OnKeyUp="HandleAllergenKeyUp" />
 
             <MudButton Variant="Variant.Filled"
-                       Color="Color.Error"
+                       Color="Color.Primary"
                        OnClick="AddCustomAllergen">
                 Add
             </MudButton>
@@ -218,7 +218,7 @@
                 @foreach (var allergen in ViewModel.CustomAllergens)
                 {
                     <MudChip T="string"
-                             Color="Color.Error"
+                             Color="Color.Primary"
                              OnClose="@(() => ViewModel.RemoveCustomAllergen(allergen))">
                         @allergen
                     </MudChip>
