@@ -7,6 +7,7 @@ namespace VibeCooking.ViewModels;
 public class IngredientsViewModel : BaseViewModel
 {
     private readonly ILocalStorageService _storage;
+    private readonly IIngredientCatalogLoader _catalogLoader;
 
     // Binary categories — ingredients in these groups are toggled on/off with no quantity.
     private static readonly HashSet<IngredientCategory> BinaryCategories =
@@ -18,9 +19,10 @@ public class IngredientsViewModel : BaseViewModel
     // All ingredients — catalog and custom — grouped by category.
     public Dictionary<IngredientCategory, List<UserIngredient>> IngredientsByCategory { get; private set; } = new();
 
-    public IngredientsViewModel(ILocalStorageService storage)
+    public IngredientsViewModel(ILocalStorageService storage, IIngredientCatalogLoader catalogLoader)
     {
         _storage = storage;
+        _catalogLoader = catalogLoader;
     }
 
     // Loads the default catalog from the bundled JSON file then loads locally stored ingredients
@@ -30,12 +32,10 @@ public class IngredientsViewModel : BaseViewModel
         await _storage.LoadIngredientsAsync(this);
     }
 
-    // Reads ingredients.json from the app bundle and populates IngredientsByCategory.
+    // Reads ingredients.json via the catalog loader and populates IngredientsByCategory.
     private async Task LoadCatalogAsync()
     {
-        using var stream = await FileSystem.OpenAppPackageFileAsync("ingredients.json");
-        using var reader = new StreamReader(stream);
-        string json = await reader.ReadToEndAsync();
+        string json = await _catalogLoader.LoadCatalogJsonAsync();
 
         var options = new JsonSerializerOptions
         {
