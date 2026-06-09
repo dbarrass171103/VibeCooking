@@ -10,4 +10,24 @@ public class SavedRecipeModel
     public DateTime SavedAt { get; set; } = DateTime.Now;
     public string? ImageBase64 { get; set; }
     public string? ImageMimeType { get; set; }
+
+	public override string ToString()
+	{
+        string ingredientsJoined = string.Join(',', Recipe.Ingredients.Select(x => x.Name));
+        string instructionsJoined = string.Join(Environment.NewLine, Recipe.Instructions);
+
+        return $"""
+            Name: {SaveName},
+            Prep Time: {Recipe.PrepTimeMinutes} mins,
+            Servings: {Recipe.Servings},
+            Prep Time: {Recipe.PrepTimeMinutes} mins,
+            Ingredients: {ingredientsJoined},
+
+            ========================================
+
+            Instructions: 
+            
+            {instructionsJoined}
+        """;
+	}
 }

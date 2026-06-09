@@ -1,0 +1,51 @@
+﻿@* confirmation dialog *@
+<MudDialog>
+    <DialogContent>
+        @if (!string.IsNullOrEmpty(QrCodeImageBase64))
+        {
+            <MudText Typo="Typo.body1">Share via QR Code</MudText>
+
+            <div style="display: flex; justify-content: center;">
+                <MudPaper Elevation="3">
+                    <img src="@QrCodeImageBase64" alt="QR Code Image" style="width: 300px; height: 300px;" />
+                </MudPaper>
+            </div>
+
+            <MudDivider Class="my-5" />
+
+            <MudText Typo="Typo.body1">Or share...</MudText>
+        }
+
+        <div style="display: flex; justify-content: center;">
+            <MudButton OnClick="@(async ()=> await ShareViaDevice())" StartIcon="@Icons.Material.Filled.Link" Variant="Variant.Outlined" Color="Color.Primary">Share via...</MudButton>
+        </div>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public string QrCodeImageBase64 { get; set; } = string.Empty;
+    [Parameter]
+    public SavedRecipeModel SavedRecipe { get; set; } = new();
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task ShareViaDevice()
+    {
+        string savedRecipeText = SavedRecipe.ToString();
+
+        await Share.Default.RequestAsync(new ShareTextRequest
+        {
+            Title = SavedRecipe.SaveName,
+            Text = savedRecipeText
+        });
+    }
+}
