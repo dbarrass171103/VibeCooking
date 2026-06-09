@@ -4,20 +4,22 @@
     <DialogContent>
         @if (SavedRecipes?.Count > 0)
         {
-            @foreach (SavedRecipeModel recipe in SavedRecipes)
-            {
-                string recipeId = recipe.Id.ToString();
-                int elevation = 2;
-                string style = "background: white;";
-
-                if (recipeId == SelectedRecipe)
+            <MudStack Spacing="3">
+                @foreach (SavedRecipeModel recipe in SavedRecipes)
                 {
-                    elevation = 5;
-                    style = "background: #ededed";
-                }
+                    string recipeId = recipe.Id.ToString();
+                    int elevation = 2;
+                    string style = "background: white;";
 
-                <MudPaper @onclick="@(()=> SelectRecipe(recipeId))" Style="@style" Class="pa-3" Elevation="@elevation">@recipe.SaveName</MudPaper>
-            }
+                    if (recipeId == SelectedRecipe)
+                    {
+                        elevation = 5;
+                        style = "background: #ededed";
+                    }
+
+                    <MudPaper @onclick="@(()=> SelectRecipe(recipeId))" Style="@style" Class="pa-3" Elevation="@elevation">@recipe.SaveName</MudPaper>
+                }
+            </MudStack>
         }
         else
         {

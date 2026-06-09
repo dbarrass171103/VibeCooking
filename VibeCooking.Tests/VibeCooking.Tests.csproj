@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.collector" Version="6.0.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <!-- Required to compile the linked ApiService.cs source file -->
+    <PackageReference Include="Azure.AI.OpenAI" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Models — no platform dependencies -->
+    <Compile Include="..\VibeCooking\Models\*.cs" LinkBase="Models" />
+
+    <!-- Service interfaces — no platform dependencies -->
+    <Compile Include="..\VibeCooking\Services\ILocalStorageService.cs" Link="Services\ILocalStorageService.cs" />
+    <Compile Include="..\VibeCooking\Services\IApiService.cs" Link="Services\IApiService.cs" />
+    <Compile Include="..\VibeCooking\Services\IIngredientCatalogLoader.cs" Link="Services\IIngredientCatalogLoader.cs" />
+    <Compile Include="..\VibeCooking\Services\IBarrel.cs" Link="Services\IBarrel.cs" />
+    <Compile Include="..\VibeCooking\Services\LocalStorageService.cs" Link="Services\LocalStorageService.cs" />
+
+    <!-- ApiService — linked so we can call its internal prompt builders directly -->
+    <Compile Include="..\VibeCooking\Services\ApiService.cs" Link="Services\ApiService.cs" />
+
+    <!-- ViewModels — no platform dependencies -->
+    <Compile Include="..\VibeCooking\ViewModels\BaseViewModel.cs" Link="ViewModels\BaseViewModel.cs" />
+    <Compile Include="..\VibeCooking\ViewModels\IngredientsViewModel.cs" Link="ViewModels\IngredientsViewModel.cs" />
+    <Compile Include="..\VibeCooking\ViewModels\MealPrepViewModel.cs" Link="ViewModels\MealPrepViewModel.cs" />
+    <Compile Include="..\VibeCooking\ViewModels\MyRecipesViewModel.cs" Link="ViewModels\MyRecipesViewModel.cs" />
+    <Compile Include="..\VibeCooking\ViewModels\RecipeGenerationViewModel.cs" Link="ViewModels\RecipeGenerationViewModel.cs" />
+    <Compile Include="..\VibeCooking\ViewModels\RecipeChatViewModel.cs" Link="ViewModels\RecipeChatViewModel.cs" />
+  </ItemGroup>
+
+</Project>

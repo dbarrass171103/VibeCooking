@@ -1,0 +1,68 @@
+@inject IThemeService ThemeService
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Settings</MudText>
+    </TitleContent>
+    <DialogContent>
+
+        <MudText Typo="Typo.subtitle2" Class="mb-2">Appearance</MudText>
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4">
+            <MudStack Spacing="0">
+                <MudText Typo="Typo.body1">Dark Mode</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    @(ThemeService.IsDarkMode ? "On" : "Off")
+                </MudText>
+            </MudStack>
+            <MudSwitch T="bool"
+                       Value="@ThemeService.IsDarkMode"
+                       ValueChanged="@(async (_) => { await ThemeService.ToggleDarkModeAsync(); StateHasChanged(); })"
+                       Color="Color.Primary" />
+        </MudStack>
+
+        <MudDivider Class="mb-4" />
+
+        <MudText Typo="Typo.subtitle2" Class="mb-3">Theme</MudText>
+
+        <MudGrid Spacing="2">
+            @foreach (ThemePreset theme in ThemeService.AvailableThemes)
+            {
+                bool isActive = theme.Name == ThemeService.CurrentTheme.Name;
+                <MudItem xs="6">
+                    <MudPaper Outlined="true"
+                              Class="@("pa-3 cursor-pointer " + (isActive ? "mud-border-primary" : ""))"
+                              Style="@(isActive ? "border-width:2px;" : "")"
+                              @onclick="@(async () => { await ThemeService.SetThemeAsync(theme); StateHasChanged(); })">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <div style="width:28px; height:28px; border-radius:50%; flex-shrink:0;
+                                        background:@theme.SwatchColor;
+                                        box-shadow: 0 1px 3px rgba(0,0,0,0.25);">
+                            </div>
+                            <MudText Typo="Typo.body2" Style="@(isActive ? "font-weight:600;" : "")">
+                                @theme.DisplayName
+                            </MudText>
+                            @if (isActive)
+                            {
+                                <MudSpacer />
+                                <MudIcon Icon="@Icons.Material.Filled.Check"
+                                         Size="Size.Small"
+                                         Color="Color.Primary" />
+                            }
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close" Color="Color.Primary" Variant="Variant.Text">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private void Close() => MudDialog.Close();
+}

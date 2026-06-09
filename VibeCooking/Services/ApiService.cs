@@ -156,7 +156,7 @@ public class ApiService : IApiService
     }
 
     // System prompt for Step 1
-    private static string BuildCardSystemPrompt(int cardCount)
+    internal static string BuildCardSystemPrompt(int cardCount)
     {
         string cards = cardCount == 1 ? "1 recipe card" : $"{cardCount} recipe cards";
         string recipes = cardCount == 1 ? "1 varied recipe" : $"{cardCount} varied and distinct recipes";
@@ -179,7 +179,7 @@ public class ApiService : IApiService
                $"Return exactly {recipes}.";
     }
     // System prompt for Step 2.
-    private static string BuildFullRecipeSystemPrompt() => """
+    internal static string BuildFullRecipeSystemPrompt() => """
         You are a recipe generator. When asked, you return a single full recipe as a
         valid JSON object and nothing else. No preamble, no explanation, no markdown fences.
 
@@ -217,7 +217,7 @@ public class ApiService : IApiService
         """;
 
     // System prompt for the recipe chat.
-    private static string BuildChatSystemPrompt(RecipeOutputModel recipe)
+    internal static string BuildChatSystemPrompt(RecipeOutputModel recipe)
     {
         string recipeJson = JsonSerializer.Serialize(recipe, new JsonSerializerOptions{WriteIndented = false,PropertyNamingPolicy = null});
 
@@ -242,7 +242,7 @@ public class ApiService : IApiService
     }
 
     // Builds the user prompt for Step 1 from the user's selected parameters.
-    private static string BuildUserPrompt(RecipeParameterModel p)
+    internal static string BuildUserPrompt(RecipeParameterModel p)
     {
         var parts = new List<string>();
 
@@ -302,7 +302,7 @@ public class ApiService : IApiService
     }
 
     // Builds the user prompt for Step 2 using the chosen card as the basis
-    private static string BuildFullRecipeUserPrompt(RecipeCardModel card, RecipeParameterModel p)
+    internal static string BuildFullRecipeUserPrompt(RecipeCardModel card, RecipeParameterModel p)
     {
         var parts = new List<string>
         {
@@ -327,7 +327,7 @@ public class ApiService : IApiService
     }
 
     // Strips markdown code fences from the AI response if present.
-    private static string CleanJson(string raw) =>
+    internal static string CleanJson(string raw) =>
         raw.Replace("```json", string.Empty)
            .Replace("```", string.Empty)
            .Trim();
