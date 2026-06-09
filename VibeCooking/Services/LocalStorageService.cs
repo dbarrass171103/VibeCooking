@@ -1,10 +1,9 @@
-﻿using MonkeyCache.FileStore;
 using VibeCooking.Models;
 using VibeCooking.ViewModels;
 
 namespace VibeCooking.Services;
 
-// Implements local persistence using MonkeyCache.FileStore.
+// Implements local persistence using an injected IBarrel (backed by MonkeyCache in production).
 public class LocalStorageService : ILocalStorageService
 {
     private const string IngredientsKey = "ingredients_selections";
@@ -12,8 +11,12 @@ public class LocalStorageService : ILocalStorageService
     private const string RecipesKey = "saved_recipes";
     private const string CalendarRecipesKey = "calendar_recipes";
 
-    // Snapshot for persisting an ingredient's selected state and quantity.
-    private record IngredientSnapshot(string Name, IngredientCategory Category, bool IsSelected, string Quantity);
+    private readonly IBarrel _barrel;
+
+    public LocalStorageService(IBarrel barrel)
+    {
+        _barrel = barrel;
+    }
 
     public Task SaveIngredientsAsync(IngredientsViewModel viewModel)
     {
@@ -31,8 +34,8 @@ public class LocalStorageService : ILocalStorageService
                 .Select(i => new IngredientSnapshot(i.Name, i.Category, i.IsSelected, i.Quantity))
                 .ToList();
 
-            Barrel.Current.Add(IngredientsKey, catalogSnapshots, TimeSpan.FromDays(365));
-            Barrel.Current.Add(CustomIngredientsKey, customSnapshots, TimeSpan.FromDays(365));
+            _barrel.Add(IngredientsKey, catalogSnapshots, TimeSpan.FromDays(365));
+            _barrel.Add(CustomIngredientsKey, customSnapshots, TimeSpan.FromDays(365));
         }
         catch (Exception ex)
         {
@@ -46,9 +49,9 @@ public class LocalStorageService : ILocalStorageService
     {
         try
         {
-            if (!Barrel.Current.IsExpired(IngredientsKey))
+            if (!_barrel.IsExpired(IngredientsKey))
             {
-                var snapshots = Barrel.Current.Get<List<IngredientSnapshot>>(IngredientsKey);
+                var snapshots = _barrel.Get<List<IngredientSnapshot>>(IngredientsKey);
 
                 if (snapshots is not null)
                 {
@@ -68,15 +71,15 @@ public class LocalStorageService : ILocalStorageService
             }
 
             // Reconstruct custom ingredients and insert them into the correct category.
-            if (!Barrel.Current.IsExpired(CustomIngredientsKey))
+            if (!_barrel.IsExpired(CustomIngredientsKey))
             {
-                var customSnapshots = Barrel.Current.Get<List<IngredientSnapshot>>(CustomIngredientsKey);
+                var customSnapshots = _barrel.Get<List<IngredientSnapshot>>(CustomIngredientsKey);
 
                 if (customSnapshots is not null)
                 {
                     foreach (var snapshot in customSnapshots)
                     {
-                    // Avoid re-adding if already present
+                        // Avoid re-adding if already present
                         bool alreadyExists = viewModel.IngredientsByCategory[snapshot.Category]
                             .Any(x => x.Name.Equals(snapshot.Name, StringComparison.OrdinalIgnoreCase));
 
@@ -104,8 +107,6 @@ public class LocalStorageService : ILocalStorageService
         return Task.CompletedTask;
     }
 
-    // Recipe Saving
-
     public Task SaveRecipeAsync(SavedRecipeModel recipe)
     {
         try
@@ -118,7 +119,7 @@ public class LocalStorageService : ILocalStorageService
             else
                 recipes.Add(recipe);
 
-            Barrel.Current.Add(RecipesKey, recipes, TimeSpan.FromDays(365));
+            _barrel.Add(RecipesKey, recipes, TimeSpan.FromDays(365));
         }
         catch (Exception ex)
         {
@@ -130,72 +131,80 @@ public class LocalStorageService : ILocalStorageService
 
     public async Task SaveCalendarRecipeAsync(KeyValuePair<DateTime, string> calendarRecipe)
     {
-        //We need to load the current saved recipes, delete the entry, and rewrite all as a day might have had a change of recipe.
         try
         {
-            var currentCalendarRecipes = await LoadCalendarRecipesAsync();
+            var current = await LoadCalendarRecipesAsync();
 
-            if (currentCalendarRecipes.ContainsKey(calendarRecipe.Key))
-            {
-                currentCalendarRecipes[calendarRecipe.Key].Add(calendarRecipe.Value);
-            }
+            if (current.ContainsKey(calendarRecipe.Key))
+                current[calendarRecipe.Key].Add(calendarRecipe.Value);
             else
-            {
-                currentCalendarRecipes[calendarRecipe.Key] = [calendarRecipe.Value];
-			}
+                current[calendarRecipe.Key] = [calendarRecipe.Value];
 
-            Barrel.Current.Add(CalendarRecipesKey, currentCalendarRecipes, TimeSpan.FromDays(365));
+            _barrel.Add(CalendarRecipesKey, current, TimeSpan.FromDays(365));
         }
         catch (Exception ex)
         {
-			Console.WriteLine($"[LocalStorageService] Failed to save calendar recipe: {ex.Message}");
-		}
-	}
+            Console.WriteLine($"[LocalStorageService] Failed to save calendar recipe: {ex.Message}");
+        }
+    }
 
     public async Task<Dictionary<DateTime, List<string>>> LoadCalendarRecipesAsync(DateTime startDate, DateTime endDate)
     {
-		try
-		{
-            if (Barrel.Current.IsExpired(CalendarRecipesKey))
-            {
+        try
+        {
+            if (_barrel.IsExpired(CalendarRecipesKey))
                 return new();
-            }
-            else
-            {
-                var calendarRecipes = Barrel.Current.Get<Dictionary<DateTime, List<string>>>(CalendarRecipesKey);
 
-                return calendarRecipes.Where(x => x.Key.Date >= startDate.Date && x.Key.Date <= endDate.Date).ToDictionary();
-            }
-		}
-		catch (Exception ex)
-		{
-			Console.WriteLine($"[LocalStorageService] Failed to load recipes: {ex.Message}");
+            var calendarRecipes = _barrel.Get<Dictionary<DateTime, List<string>>>(CalendarRecipesKey);
+            return calendarRecipes
+                .Where(x => x.Key.Date >= startDate.Date && x.Key.Date <= endDate.Date)
+                .ToDictionary();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[LocalStorageService] Failed to load recipes: {ex.Message}");
             return new();
-		}
-	}
+        }
+    }
 
-	public async Task<Dictionary<DateTime, List<string>>> LoadCalendarRecipesAsync()
-	{
-		try
-		{
-			if (Barrel.Current.IsExpired(CalendarRecipesKey))
-			{
-				return new();
-			}
-			else
-			{
-				var calendarRecipes = Barrel.Current.Get<Dictionary<DateTime, List<string>>>(CalendarRecipesKey);
-                return calendarRecipes;
-			}
-		}
-		catch (Exception ex)
-		{
-			Console.WriteLine($"[LocalStorageService] Failed to load recipes: {ex.Message}");
-			return new();
-		}
-	}
+    public async Task<Dictionary<DateTime, List<string>>> LoadCalendarRecipesAsync()
+    {
+        try
+        {
+            if (_barrel.IsExpired(CalendarRecipesKey))
+                return new();
 
-	public Task<List<SavedRecipeModel>> LoadRecipesAsync()
+            return _barrel.Get<Dictionary<DateTime, List<string>>>(CalendarRecipesKey) ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[LocalStorageService] Failed to load recipes: {ex.Message}");
+            return new();
+        }
+    }
+
+    public async Task RemoveCalendarRecipeAsync(DateTime date, string recipeId)
+    {
+        try
+        {
+            var current = await LoadCalendarRecipesAsync();
+
+            if (current.TryGetValue(date, out var ids))
+            {
+                ids.Remove(recipeId);
+                if (ids.Count == 0)
+                    current.Remove(date);
+            }
+
+            _barrel.Add(CalendarRecipesKey, current, TimeSpan.FromDays(365));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[LocalStorageService] Failed to remove calendar recipe: {ex.Message}");
+        }
+    }
+
+    public Task<List<SavedRecipeModel>> LoadRecipesAsync()
     {
         try
         {
@@ -218,7 +227,7 @@ public class LocalStorageService : ILocalStorageService
         {
             var recipes = LoadRecipeList();
             recipes.RemoveAll(r => r.Id == id);
-            Barrel.Current.Add(RecipesKey, recipes, TimeSpan.FromDays(365));
+            _barrel.Add(RecipesKey, recipes, TimeSpan.FromDays(365));
         }
         catch (Exception ex)
         {
@@ -230,9 +239,13 @@ public class LocalStorageService : ILocalStorageService
 
     private List<SavedRecipeModel> LoadRecipeList()
     {
-        if (Barrel.Current.IsExpired(RecipesKey))
+        if (_barrel.IsExpired(RecipesKey))
             return new();
 
-        return Barrel.Current.Get<List<SavedRecipeModel>>(RecipesKey) ?? new();
+        return _barrel.Get<List<SavedRecipeModel>>(RecipesKey) ?? new();
     }
 }
+
+// Snapshot for persisting an ingredient's selected state and quantity.
+// Internal so it is accessible in the test project (which links this file into the same assembly).
+internal record IngredientSnapshot(string Name, IngredientCategory Category, bool IsSelected, string Quantity);

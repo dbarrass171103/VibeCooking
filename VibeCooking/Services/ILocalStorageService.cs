@@ -26,4 +26,6 @@ public interface ILocalStorageService
     public Task<Dictionary<DateTime, List<string>>> LoadCalendarRecipesAsync();
 
 	public Task SaveCalendarRecipeAsync(KeyValuePair<DateTime, string> calendarRecipe);
+
+	public Task RemoveCalendarRecipeAsync(DateTime date, string recipeId);
 }

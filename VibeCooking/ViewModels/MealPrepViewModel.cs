@@ -1,5 +1,3 @@
-﻿using Heron.MudCalendar;
-using Heron.MudTotalCalendar;
 using VibeCooking.Models;
 using VibeCooking.Services;
 
@@ -9,11 +7,13 @@ public class MealPrepViewModel : BaseViewModel
 {
 	private readonly ILocalStorageService _localStorageService;
 
-	public List<CalendarItem> CalendarItems { get; set; } = new();
-	public List<Value> CalendarTotalItems { get; set; } = new();
+	public DateTime CurrentWeekStart { get; private set; }
+	public DateTime CurrentWeekEnd => CurrentWeekStart.AddDays(7);
+
+	public List<DayMealEntry> WeekDays { get; set; } = new();
+	public List<WeekIngredientEntry> WeekIngredients { get; set; } = new();
 
 	public List<SavedRecipeModel> SavedRecipes { get; set; } = new();
-	public Dictionary<DateTime, List<string>> LoadedCalendarRecipes { get; set; } = new();
 
 	public MealPrepViewModel(ILocalStorageService localStorageService)
 	{
@@ -23,68 +23,82 @@ public class MealPrepViewModel : BaseViewModel
 	public override async Task InitAsync()
 	{
 		SavedRecipes = await _localStorageService.LoadRecipesAsync();
-		var today = DateTime.Today;
 
-		int daysFromMonday = ((int)today.DayOfWeek + 6) % 7;
+        var today = DateTime.Today;
+        int daysFromMonday = ((int)today.DayOfWeek + 6) % 7;
+        CurrentWeekStart = today.AddDays(-daysFromMonday);
 
-		var startOfWeek = today.AddDays(-daysFromMonday);
-		var endOfWeek = startOfWeek.AddDays(7);
-
-		await ReloadCalendarRecipesAsync(startOfWeek, endOfWeek);
+        await ReloadWeekAsync();
 	}
 
-	public async Task ReloadCalendarRecipesAsync(DateTime start, DateTime end)
+	public async Task GoToPreviousWeekAsync()
 	{
-		LoadedCalendarRecipes = await _localStorageService.LoadCalendarRecipesAsync(start, end);
-		CalendarItems = new();
+		CurrentWeekStart = CurrentWeekStart.AddDays(-7);
+		await ReloadWeekAsync();
+	}
 
-		Dictionary<DateTime, List<string>> ingredientsTotals = new();
+	public async Task GoToNextWeekAsync()
+	{
+		CurrentWeekStart = CurrentWeekStart.AddDays(7);
+		await ReloadWeekAsync();
+	}
 
-		foreach (var keyValue in LoadedCalendarRecipes)
+	private async Task ReloadWeekAsync()
+	{
+		var loaded = await _localStorageService.LoadCalendarRecipesAsync(CurrentWeekStart, CurrentWeekEnd);
+
+		WeekDays = new();
+		WeekIngredients = new();
+
+		for (int i = 0; i < 7; i++)
 		{
-			foreach (string recipeUUID in keyValue.Value)
+			var date = CurrentWeekStart.AddDays(i);
+			var meals = new List<MealEntry>();
+
+			if (loaded.TryGetValue(date, out var recipeIds))
 			{
-				SavedRecipeModel? savedRecipe = SavedRecipes.Where(x => x.Id.ToString() == recipeUUID).FirstOrDefault() ?? null;
-
-				if (savedRecipe != null)
+				foreach (var id in recipeIds)
 				{
-					List<string> savedRecipeIngredients = savedRecipe.Recipe.Ingredients.Select(x => x.Name).ToList();
-					ingredientsTotals.Add(keyValue.Key, savedRecipeIngredients);
-
-					CalendarItems.Add(new CalendarItem()
+					var recipe = SavedRecipes.FirstOrDefault(x => x.Id.ToString() == id);
+					if (recipe != null)
 					{
-						Text = savedRecipe.SaveName,
-						Start = keyValue.Key
-					});
+						meals.Add(new MealEntry { RecipeId = id, Name = recipe.SaveName });
+						WeekIngredients.AddRange(recipe.Recipe.Ingredients.Select(x => new WeekIngredientEntry { Name = x.Name, Quantity = x.Quantity }));
+					}
 				}
 			}
-		}
 
-		await ReloadTotalIngredientsAsync(ingredientsTotals);
-	}
-
-	private async Task ReloadTotalIngredientsAsync(Dictionary<DateTime, List<string>> ingredientsTotals)
-	{
-		CalendarTotalItems = new();
-
-		foreach (var keyValue in ingredientsTotals)
-		{
-			foreach (string ingredient in keyValue.Value)
-			{
-				CalendarTotalItems.Add(new()
-				{
-					Date = keyValue.Key,
-					Definition = new ValueDefinition()
-					{
-						Name = ingredient
-					}
-				});
-			}
+			WeekDays.Add(new DayMealEntry { Date = date, Meals = meals });
 		}
 	}
 
 	public async Task MapDateToRecipeAsync(DateTime date, string recipeId)
 	{
 		await _localStorageService.SaveCalendarRecipeAsync(new KeyValuePair<DateTime, string>(date, recipeId));
+		await ReloadWeekAsync();
 	}
+
+	public async Task RemoveMealAsync(DateTime date, string recipeId)
+	{
+		await _localStorageService.RemoveCalendarRecipeAsync(date, recipeId);
+		await ReloadWeekAsync();
+	}
+}
+
+public class DayMealEntry
+{
+	public DateTime Date { get; set; }
+	public List<MealEntry> Meals { get; set; } = new();
+}
+
+public class MealEntry
+{
+	public string RecipeId { get; set; } = string.Empty;
+	public string Name { get; set; } = string.Empty;
+}
+
+public class WeekIngredientEntry
+{
+	public string Name { get; set; } = string.Empty;
+	public string Quantity { get; set; } = string.Empty;
 }

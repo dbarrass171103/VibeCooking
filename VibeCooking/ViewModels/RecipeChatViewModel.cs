@@ -72,7 +72,6 @@ public class RecipeChatViewModel : BaseViewModel
         IsSending = true;
 
         // Add user message to history
-        Messages.Add(new ChatMessageModel { Role = "user", Content = userMessage.Trim() });
         var userEntry = new ChatMessageModel { Role = "user", Content = userMessage.Trim() };
         Messages.Add(userEntry);
 
