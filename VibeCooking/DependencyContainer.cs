@@ -21,6 +21,7 @@ public static class DependencyContainer
         services.AddTransient<IApiService, ApiService>();
         services.AddSingleton<IBarrel, MonkeyBarrel>();
         services.AddSingleton<ILocalStorageService, LocalStorageService>();
+        services.AddTransient<IQrCodeService, QrCodeService>();
         services.AddSingleton<IIngredientCatalogLoader, MauiIngredientCatalogLoader>();
         services.AddSingleton<IThemeService, ThemeService>();
     }

@@ -115,7 +115,9 @@
                         </div>
 
                         @* Actions *@
-                        <div style="display:flex; gap:8px;">
+                        <div style="display:flex; gap:8px; margin-top: 20px;">
+                            <MudIconButton Icon="@Icons.Material.Filled.Share" Color="Color.Secondary" , Variant="Variant.Outlined" OnClick="@(()=> OnShareButtonClicked(saved))"/>
+
                             <MudButton Variant="Variant.Filled"
                                        Color="Color.Primary"
                                        FullWidth="true"
@@ -147,6 +149,27 @@
     {
         ViewModel.OpenRecipe(saved);
         Navigation.NavigateTo("/recipe-chat");
+    }
+
+    private async Task OnShareButtonClicked(SavedRecipeModel saved)
+    {
+        var response = await ViewModel.ShareRecipeAsync(saved);
+
+        if (!response.success)
+        {
+            Snackbar.Add("Failed to create QR code", Severity.Warning);
+        }
+
+        string? imageSource = response.image is null ? null : $"data:image/png;base64,{Convert.ToBase64String(response.image)}";
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var parameters = new DialogParameters<ShareRecipeDialog>()
+        {
+            { x => x.QrCodeImageBase64, imageSource },
+            { x => x.SavedRecipe, saved}
+        };
+
+        var dialog = await DialogService.ShowAsync<ShareRecipeDialog>("Share Recipe", parameters, options);
     }
 
     private async Task OpenUpdatePhotoDialog(SavedRecipeModel saved)

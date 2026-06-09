@@ -1,5 +1,9 @@
-﻿using VibeCooking.Models;
+﻿using System.IO.Compression;
+using System.Text;
+using System.Text.Json;
+using VibeCooking.Models;
 using VibeCooking.Services;
+using VibeCooking.Utilities;
 
 namespace VibeCooking.ViewModels;
 
@@ -7,6 +11,7 @@ public class MyRecipesViewModel : BaseViewModel
 {
     private readonly ILocalStorageService _storage;
     private readonly RecipeChatViewModel _recipeChatViewModel;
+    private readonly IQrCodeService _qrcodeService;
 
     public List<SavedRecipeModel> Recipes { get; private set; } = new();
     public string SearchQuery { get; set; } = string.Empty;
@@ -23,10 +28,11 @@ public class MyRecipesViewModel : BaseViewModel
             r.Recipe.Difficulty.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase))
         .ToList();
 
-    public MyRecipesViewModel(ILocalStorageService storage, RecipeChatViewModel recipeChatViewModel)
+    public MyRecipesViewModel(ILocalStorageService storage, RecipeChatViewModel recipeChatViewModel, IQrCodeService qrcodeService)
     {
         _storage = storage;
         _recipeChatViewModel = recipeChatViewModel;
+        _qrcodeService = qrcodeService;
     }
 
     public override async Task InitAsync()
@@ -80,4 +86,25 @@ public class MyRecipesViewModel : BaseViewModel
         await _storage.SaveRecipeAsync(recipe);
         await RefreshAsync();
     }
+
+	public async Task<(bool success, string errorMessage, byte[]? image)> ShareRecipeAsync(SavedRecipeModel savedRecipe)
+	{
+		try
+		{
+			string json = JsonSerializer.Serialize(savedRecipe);
+
+			string compressedData = CompressionUtility.CompressToBase64(json);
+
+			var response = _qrcodeService.GenerateQrCodeSavedRecipe(compressedData);
+
+			if (!response.success)
+				throw new Exception(response.errorMessage);
+
+			return (true, "", response.qrcode);
+		}
+		catch (Exception ex)
+		{
+			return (false, ex.Message, null);
+		}
+	}
 }
