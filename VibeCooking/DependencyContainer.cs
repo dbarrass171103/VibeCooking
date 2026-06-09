@@ -20,5 +20,6 @@ public static class DependencyContainer
         // Services
         services.AddTransient<IApiService, ApiService>();
         services.AddSingleton<ILocalStorageService, LocalStorageService>();
+        services.AddTransient<IQrCodeService, QrCodeService>();
     }
 }

@@ -73,6 +73,7 @@
         <PackageReference Include="MonkeyCache" Version="2.1.1" />
         <PackageReference Include="MonkeyCache.FileStore" Version="2.1.1" />
         <PackageReference Include="MudBlazor" Version="9.4.0" />
+        <PackageReference Include="QRCoder" Version="1.8.0" />
     </ItemGroup>
 
 </Project>
