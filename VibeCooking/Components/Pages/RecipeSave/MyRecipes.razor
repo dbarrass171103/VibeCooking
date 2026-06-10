@@ -4,11 +4,14 @@
 
 @using VibeCooking.Models
 @using VibeCooking.ViewModels
+@using VibeCooking.Services
 
 @inject MyRecipesViewModel ViewModel
 @inject NavigationManager Navigation
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject IQrScanResultService qrScanService
+@implements IDisposable
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4 mb-8">
 
@@ -147,12 +150,23 @@
     protected override async Task OnInitializedAsync()
     {
         await ViewModel.InitAsync();
+        qrScanService.OnRecipeScanned += HandleQrRecipe;
     }
 
     private void OpenRecipe(SavedRecipeModel saved)
     {
         ViewModel.OpenRecipe(saved);
         Navigation.NavigateTo("/recipe-chat");
+    }
+
+    private void HandleQrRecipe(SavedRecipeModel savedRecipe)
+    {
+        OpenRecipe(savedRecipe);
+    }
+
+    public void Dispose()
+    {
+        qrScanService.OnRecipeScanned -= HandleQrRecipe;
     }
 
     private async Task OnShareButtonClicked(SavedRecipeModel saved)
@@ -178,7 +192,26 @@
 
     private async Task OnAddQrRecipeClicked()
     {
-        //TODO
+        if (DeviceInfo.Platform == DevicePlatform.WinUI)
+        {
+            Snackbar.Add("QR scanning is not supported on Windows.", Severity.Info);
+            return;
+        }
+
+        PermissionStatus status = await Permissions.RequestAsync<Permissions.Camera>();
+
+        if (status != PermissionStatus.Granted)
+        {
+            Snackbar.Add("Camera Permissions Denied. Please allow camera access.", Severity.Error);
+            return;
+        }
+
+        var page = new QrScannerPage(qrScanService);
+
+        if (Application.Current?.MainPage != null)
+            await Application.Current.MainPage.Navigation.PushModalAsync(page);
+        else
+            Snackbar.Add("Error loading QR scanner", Severity.Error);
     }
 
     private async Task OpenUpdatePhotoDialog(SavedRecipeModel saved)
