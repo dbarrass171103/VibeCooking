@@ -46,6 +46,14 @@ public partial class QrScannerPage : ContentPage
 		}
 	}
 
+	private async void OnCloseClicked(object sender, EventArgs e)
+	{
+		await MainThread.InvokeOnMainThreadAsync(async () =>
+		{
+			await Application.Current.MainPage.Navigation.PopModalAsync();
+		});
+	}
+
 	protected override void OnAppearing()
 	{
 		base.OnAppearing();
