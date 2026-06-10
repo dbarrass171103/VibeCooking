@@ -24,5 +24,6 @@ public static class DependencyContainer
         services.AddTransient<IQrCodeService, QrCodeService>();
         services.AddSingleton<IIngredientCatalogLoader, MauiIngredientCatalogLoader>();
         services.AddSingleton<IThemeService, ThemeService>();
+        services.AddSingleton<IQrScanResultService, QrCodeService>();
     }
 }

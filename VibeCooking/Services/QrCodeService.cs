@@ -1,9 +1,12 @@
 ﻿using QRCoder;
+using VibeCooking.Models;
 
 namespace VibeCooking.Services;
 
-public class QrCodeService : IQrCodeService
+public class QrCodeService : IQrCodeService, IQrScanResultService
 {
+	public event Action<SavedRecipeModel>? OnRecipeScanned;
+
 	public (bool success, string errorMessage, byte[] qrcode) GenerateQrCodeSavedRecipe(string json)
 	{
 		try
@@ -16,5 +19,10 @@ public class QrCodeService : IQrCodeService
 		{
 			return (false, ex.Message, []);
 		}
+	}
+
+	public void Publish(SavedRecipeModel recipe)
+	{
+		OnRecipeScanned?.Invoke(recipe);
 	}
 }
