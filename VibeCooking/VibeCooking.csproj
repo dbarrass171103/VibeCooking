@@ -63,6 +63,7 @@
 
     <ItemGroup>
         <PackageReference Include="Azure.AI.OpenAI" Version="2.1.0" />
+        <PackageReference Include="BarcodeScanning.Native.Maui" Version="1.8.0" />
         <PackageReference Include="Heron.MudCalendar" Version="4.0.0" />
         <PackageReference Include="Heron.MudTotalCalendar" Version="4.0.0" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
@@ -74,6 +75,14 @@
         <PackageReference Include="MonkeyCache.FileStore" Version="2.1.1" />
         <PackageReference Include="MudBlazor" Version="9.4.0" />
         <PackageReference Include="QRCoder" Version="1.8.0" />
+        <PackageReference Include="ZXing.Net.Maui" Version="0.4.0" />
+        <PackageReference Include="ZXing.Net.Maui.Controls" Version="0.4.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <MauiXaml Update="Components\Pages\RecipeSave\QrScannerPage.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </MauiXaml>
     </ItemGroup>
 
 </Project>

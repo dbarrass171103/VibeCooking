@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Logging;
 using MudBlazor;
 using MudBlazor.Services;
+using ZXing.Net.Maui.Controls;
+using BarcodeScanning;
 
 namespace VibeCooking
 {
@@ -12,6 +14,7 @@ namespace VibeCooking
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+                .UseBarcodeReader()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -35,6 +38,10 @@ namespace VibeCooking
                 config.SnackbarConfiguration.HideTransitionDuration = 500;
             });
             builder.Services.AddDependencies();
+
+#if !WINDOWS
+            builder.UseBarcodeScanning();
+#endif
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
