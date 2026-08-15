@@ -4,7 +4,22 @@
              xmlns:scanner="clr-namespace:BarcodeScanning;assembly=BarcodeScanning.Native.Maui"
              x:Class="VibeCooking.Components.Pages.RecipeSave.QrScannerPage">
 
-    <scanner:CameraView x:Name="cameraView"
-                        OnDetectionFinished="CameraView_OnDetectionFinished"
-                        IsVisible="{OnPlatform Android=True, iOS=True, WinUI=False}"/>
+    <Grid>
+        <scanner:CameraView x:Name="cameraView"
+                            OnDetectionFinished="CameraView_OnDetectionFinished"
+                            IsVisible="{OnPlatform Android=True, iOS=True, WinUI=False}" />
+
+        <!-- Overlay the camera view UI -->
+        <Button Text="Close"
+                WidthRequest="100"
+                HeightRequest="44"
+                HorizontalOptions="End"
+                VerticalOptions="Start"
+                Margin="20"
+                BackgroundColor="Black"
+                TextColor="White"
+                Opacity="0.8"
+                Clicked="OnCloseClicked"/>
+    </Grid>
+
 </ContentPage>
